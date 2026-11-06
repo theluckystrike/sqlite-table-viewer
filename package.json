@@ -1,0 +1,112 @@
+{
+  "name": "sqlite-table-viewer",
+  "displayName": "SQLite Table Viewer",
+  "description": "Open SQLite databases (.db, .sqlite, .sqlite3) read-only: browse tables with paging, see the schema, run SELECT queries, view JSON and BLOB cells and export CSV. Offline.",
+  "version": "0.1.0",
+  "publisher": "zovo",
+  "license": "MIT",
+  "icon": "icon.png",
+  "galleryBanner": { "color": "#0B2238", "theme": "dark" },
+  "engines": { "vscode": "^1.90.0", "node": ">=18" },
+  "categories": ["Data Science", "Visualization", "Other"],
+  "keywords": [
+    "sqlite", "sqlite3", "sqlite viewer", "sqlite browser", "database", "db", "db viewer", "database viewer", "sql", "query",
+    "table", "schema", "browser", "explorer", "viewer", "read only", "db3", "vscdb", "geopackage", "gpkg",
+    "export csv", "json", "blob", "embeddings", "data", "offline", "indexes", "views", "table viewer", "data browser"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": { "supported": true },
+    "virtualWorkspaces": true
+  },
+  "contributes": {
+    "customEditors": [
+      {
+        "viewType": "sqliteTableViewer.database",
+        "displayName": "SQLite Table Viewer",
+        "selector": [
+          { "filenamePattern": "*.db" },
+          { "filenamePattern": "*.sqlite" },
+          { "filenamePattern": "*.sqlite3" },
+          { "filenamePattern": "*.db3" },
+          { "filenamePattern": "*.s3db" },
+          { "filenamePattern": "*.sl3" },
+          { "filenamePattern": "*.vscdb" },
+          { "filenamePattern": "*.gpkg" }
+        ],
+        "priority": "default"
+      }
+    ],
+    "commands": [
+      { "command": "sqliteTableViewer.open", "title": "Open in SQLite Table Viewer", "category": "SQLite Table Viewer", "icon": "$(database)" },
+      { "command": "sqliteTableViewer.openWalkthrough", "title": "Get Started", "category": "SQLite Table Viewer" }
+    ],
+    "menus": {
+      "explorer/context": [
+        { "command": "sqliteTableViewer.open", "when": "!explorerResourceIsFolder", "group": "navigation@21" }
+      ]
+    },
+    "configuration": {
+      "title": "SQLite Table Viewer",
+      "properties": {
+        "sqliteTableViewer.maxFileSizeMB": {
+          "type": "number", "default": 512, "minimum": 1,
+          "description": "The whole database is loaded into memory. Larger files show a message instead of loading."
+        },
+        "sqliteTableViewer.copyMaxRows": {
+          "type": "number", "default": 100000, "minimum": 1,
+          "description": "Copy at most this many rows to the clipboard at once."
+        },
+        "sqliteTableViewer.exportMaxRows": {
+          "type": "number", "default": 1000000, "minimum": 1,
+          "description": "Export at most this many rows to a CSV or JSON file."
+        }
+      }
+    },
+    "walkthroughs": [
+      {
+        "id": "sqliteTableViewer.start",
+        "title": "Get started with SQLite Table Viewer",
+        "description": "Open SQLite files read-only, browse tables, run SELECT queries and look inside JSON and BLOB cells.",
+        "steps": [
+          {
+            "id": "open",
+            "title": "Open a database",
+            "description": "Click any .db, .sqlite, .sqlite3, .db3, .s3db, .sl3, .vscdb or .gpkg file. For other names, right-click the file and pick \"Open in SQLite Table Viewer\".\n[Find a database](command:workbench.action.quickOpen?%5B%22.db%22%5D)",
+            "media": { "markdown": "walkthrough/open.md" },
+            "completionEvents": ["onCommand:workbench.action.quickOpen", "onCommand:sqliteTableViewer.open"]
+          },
+          {
+            "id": "browse",
+            "title": "Sort, filter and read the schema",
+            "description": "Pick a table on the left. Click a header to sort and type under it to filter. The Schema tab shows columns, keys, foreign keys and the CREATE statement.",
+            "media": { "image": "images/orders-dark.png", "altText": "The orders table filtered to paid orders over 1,000 dollars and sorted by total, next to the list of tables, views, indexes and triggers." }
+          },
+          {
+            "id": "cells",
+            "title": "Look inside a cell",
+            "description": "Double-click a cell or press Enter. JSON shows as a tree, images show as pictures, and float32 BLOBs show as vectors with their size and norm.\n[Open settings](command:workbench.action.openSettings?%5B%22sqliteTableViewer%22%5D)",
+            "media": { "markdown": "walkthrough/cells.md" },
+            "completionEvents": ["onCommand:workbench.action.openSettings"]
+          }
+        ]
+      }
+    ]
+  },
+  "scripts": {
+    "build": "node scripts/build.js --production",
+    "test": "node scripts/build.js --production && node --test \"test/*.test.js\"",
+    "samples": "python3 -I scripts/make-samples.py samples",
+    "package": "npm run build && npx -y @vscode/vsce package --no-dependencies -o dist/"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "sql.js": "1.15.2"
+  },
+  "homepage": "https://github.com/theluckystrike/sqlite-table-viewer#readme",
+  "bugs": { "url": "https://github.com/theluckystrike/sqlite-table-viewer/issues" },
+  "repository": { "type": "git", "url": "https://github.com/theluckystrike/sqlite-table-viewer" }
+}

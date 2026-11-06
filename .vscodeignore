@@ -1,0 +1,15 @@
+src/**
+test/**
+scripts/**
+samples/**
+node_modules/**
+**/*.map
+icon.svg
+.gitignore
+dist/*.vsix
+*.vsix
+images/schema-dark.png
+images/sql-dark.png
+images/json-tree-light.png
+images/vector-light.png
+images/wal-dark.png
