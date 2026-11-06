@@ -7,6 +7,7 @@ const { buildHtml } = require('./html');
 const { validateWebviewMessage } = require('./core/protocol');
 const { sniff } = require('./core/sqlutil');
 const { createRatingPrompt } = require('./rate');
+const { registerSupport, commandUris, showLinks } = require('./support');
 
 let rating = { success() {} };
 
@@ -52,7 +53,8 @@ class DatabaseEditorProvider {
     const ctx = this.context;
     const dist = vscode.Uri.joinPath(ctx.extensionUri, 'dist');
     const media = vscode.Uri.joinPath(ctx.extensionUri, 'media');
-    panel.webview.options = { enableScripts: true, localResourceRoots: [dist, media] };
+    // Command links are limited to the two support commands and the settings page (footer "Hide" link).
+    panel.webview.options = { enableScripts: true, localResourceRoots: [dist, media], enableCommandUris: commandUris('sqliteTableViewer') };
     const uri = document.uri;
     const name = path.posix.basename(uri.path);
     panel.webview.html = buildHtml({
@@ -60,6 +62,7 @@ class DatabaseEditorProvider {
       scriptUri: panel.webview.asWebviewUri(vscode.Uri.joinPath(dist, 'webview.js')).toString(),
       styleUri: panel.webview.asWebviewUri(vscode.Uri.joinPath(media, 'webview.css')).toString(),
       title: name,
+      showSupportLinks: showLinks(vscode, 'sqliteTableViewer'),
     });
 
     const opts = settings();
@@ -189,6 +192,7 @@ class DatabaseEditorProvider {
 
 function activate(context) {
   rating = createRatingPrompt({ vscode, context, extensionId: 'zovo.sqlite-table-viewer', section: 'sqliteTableViewer', message: (n) => `SQLite Table Viewer has opened ${n} databases for you. A rating helps other people find it.` });
+  registerSupport({ vscode, context, prefix: 'sqliteTableViewer', selfId: 'zovo.sqlite-table-viewer' });
   const provider = new DatabaseEditorProvider(context);
   context.subscriptions.push(
     vscode.window.registerCustomEditorProvider(VIEW_TYPE, provider, { webviewOptions: { retainContextWhenHidden: false }, supportsMultipleEditorsPerDocument: true }),

@@ -110,6 +110,9 @@ const statusMid = el('span', 'mid');
 const statusRight = el('span', 'right');
 status.append(statusLeft, statusMid, statusRight);
 app.append(toolbar, banners, main, status);
+// The host renders the Sponsor and More free viewers line (or leaves it out when the setting hides it).
+const supportLine = document.getElementById('zovo-support');
+if (supportLine) status.append(supportLine);
 
 // ---------- tabs ----------
 function setTab(id) {
