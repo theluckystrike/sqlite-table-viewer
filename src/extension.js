@@ -6,6 +6,9 @@ const { Worker } = require('worker_threads');
 const { buildHtml } = require('./html');
 const { validateWebviewMessage } = require('./core/protocol');
 const { sniff } = require('./core/sqlutil');
+const { createRatingPrompt } = require('./rate');
+
+let rating = { success() {} };
 
 const VIEW_TYPE = 'sqliteTableViewer.database';
 const KNOWN_EXT = /\.(db|sqlite|sqlite3|db3|s3db|sl3|vscdb|gpkg)$/i;
@@ -65,6 +68,7 @@ class DatabaseEditorProvider {
     let webviewReady = false;
     let fatal = null;
     let exportTarget = null;
+    let counted = false; // one success per opened tab, for the rating prompt
     const warnings = [];
     const queue = [];
     const toWebview = msg => {
@@ -97,6 +101,7 @@ class DatabaseEditorProvider {
         if (msg.type === 'copyResult') return onCopy(msg);
         if (msg.type === 'exportResult') return onExport(msg);
         if (msg.type === 'error' && !msg.transient) { fatal = msg; }
+        if (msg.type === 'meta' && !counted && !fatal) { counted = true; rating.success(); }
         toWebview(msg);
       });
       worker.on('error', e => failHost(`The reader stopped: ${e.message}`));
@@ -183,6 +188,7 @@ class DatabaseEditorProvider {
 }
 
 function activate(context) {
+  rating = createRatingPrompt({ vscode, context, extensionId: 'zovo.sqlite-table-viewer', section: 'sqliteTableViewer', message: (n) => `SQLite Table Viewer has opened ${n} databases for you. A rating helps other people find it.` });
   const provider = new DatabaseEditorProvider(context);
   context.subscriptions.push(
     vscode.window.registerCustomEditorProvider(VIEW_TYPE, provider, { webviewOptions: { retainContextWhenHidden: false }, supportsMultipleEditorsPerDocument: true }),

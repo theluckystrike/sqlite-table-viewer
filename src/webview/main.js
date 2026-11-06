@@ -98,6 +98,8 @@ grid.append(sizer);
 const cellPanel = el('div', 'cellpanel');
 cellPanel.hidden = true;
 gridWrap.append(grid, cellPanel);
+let fitHex = () => {};
+if (typeof ResizeObserver === 'function') new ResizeObserver(() => fitHex()).observe(cellPanel);
 const empty = el('div', 'empty');
 empty.hidden = true;
 content.append(sqlBar, schemaPanel, gridWrap, empty);
@@ -529,7 +531,15 @@ function renderCell(msg) {
     cellPanel.append(el('pre', 'cellpre', '[' + vec.head.map(C.num).join(', ') + (vec.dim > vec.head.length ? `, … ${fmtN(vec.dim - vec.head.length)} more]` : ']')));
   }
   cellPanel.append(el('div', 'k', `Hex · ${fmtN(v.size)} bytes` + (v.hexCut ? ' (first 4 KB)' : '')));
-  cellPanel.append(el('pre', 'cellpre hex', v.hex));
+  const pre = el('pre', 'cellpre hex', v.hex);
+  cellPanel.append(pre);
+  fitHex = () => {
+    // 16 bytes per row when the panel is wide enough, else 8, so the dump fits the panel.
+    if (!pre.isConnected || cellPanel.hidden) return;
+    pre.textContent = v.hex;
+    if (pre.scrollWidth > pre.clientWidth + 1) pre.textContent = C.hexRows(v.hex, 8);
+  };
+  fitHex();
 }
 
 function jsonTree(v, depth) {

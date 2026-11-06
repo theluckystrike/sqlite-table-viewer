@@ -1,7 +1,7 @@
 // Live harness for the SQLite Table Viewer webview: the real html.js page (with its CSP), the real
 // dist/webview.js, the real protocol check and the real Session on sql.js, driven over CDP.
 // Usage: node scripts/screenshot/live.js <extRoot> <cdpPort> <outDir> <scenario> <samplesDir>
-//   scenarios: orders-dark, types-light, sql-dark, wal-dark, corrupt-dark
+//   scenarios: orders-dark, types-light, hex-dark, sql-dark, wal-dark, corrupt-dark
 // cdpPort: a Chrome started with ~/bin/agent-chrome (AGENT_CHROME_HEADLESS=1).
 const fs = require('fs');
 const http = require('http');
@@ -25,6 +25,7 @@ const THEMES = {
 const SCENARIOS = {
   'orders-dark': { theme: 'dark', file: 'store.db' },
   'types-light': { theme: 'light', file: 'types.sqlite' },
+  'hex-dark': { theme: 'dark', file: 'types.sqlite' },
   'sql-dark': { theme: 'dark', file: 'store.db' },
   'wal-dark': { theme: 'dark', file: 'wal-mode.db' },
   'corrupt-dark': { theme: 'dark', file: 'corrupt.db' },
@@ -147,6 +148,11 @@ const server = http.createServer((req, res) => {
     result.vector = await evalJs(`document.querySelector('.cellpanel .fields') && document.querySelector('.cellpanel .fields').textContent`);
     await shot('vector-light.png');
     result.xssSafe = await evalJs(`!document.querySelector('.grid b, .cellpanel script, .grid script')`);
+  } else if (scenario === 'hex-dark') {
+    await waitRows();
+    await click(await cellPos(10, 6), 0, 2); await settle();
+    result.hex = await evalJs(`(() => { const p = document.querySelector('.cellpre.hex'); const c = document.querySelector('.cellpanel'); return JSON.stringify({ rows: p.textContent.split('\\n').length, first: p.textContent.split('\\n')[0], preScroll: p.scrollWidth > p.clientWidth, panelScroll: c.scrollWidth > c.clientWidth }); })()`);
+    await shot(`hex-dark-${process.env.W || 1280}.png`);
   } else if (scenario === 'vec-dark') {
     await waitRows();
     await click(await cellPos(2, 4), 0, 2); await settle();

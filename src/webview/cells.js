@@ -53,4 +53,22 @@ function shortCount(n) {
   return (n / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
 }
 
-module.exports = { display, kindLabel, prettyJson, num, shortCount, formatBytes };
+/**
+ * Re-flow a 16-bytes-per-row hex dump (sqlutil.hexDump: 8-digit offset, 2 groups of 8 bytes, ASCII)
+ * to 8 bytes per row, so it fits a narrow cell panel without sideways scrolling.
+ */
+function hexRows(text, perRow) {
+  if (perRow !== 8 || !text) return text;
+  const out = [];
+  for (const line of String(text).split('\n')) {
+    const off = parseInt(line.slice(0, 8), 16);
+    if (!Number.isFinite(off) || line.length < 60) { out.push(line); continue; }
+    const asc = line.slice(60);
+    out.push(line.slice(0, 8) + '  ' + line.slice(10, 33) + '  ' + asc.slice(0, 8));
+    const b = line.slice(35, 58);
+    if (b.trim()) out.push((off + 8).toString(16).padStart(8, '0') + '  ' + b + '  ' + asc.slice(8));
+  }
+  return out.join('\n');
+}
+
+module.exports = { display, kindLabel, prettyJson, num, shortCount, formatBytes, hexRows };

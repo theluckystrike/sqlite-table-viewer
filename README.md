@@ -47,6 +47,15 @@ Double-click a cell, or press Enter, to open the cell viewer. Text and JSON show
 
 Select cells by dragging or with Shift+click, or click row numbers for whole rows. Copy CSV, Copy JSON and Copy INSERT put the selection on the clipboard, and Ctrl+C (Cmd+C on macOS) copies tab-separated values. Export saves every row in view, filtered and sorted, as CSV or JSON.
 
+## Settings
+
+| Setting | Default | What it does |
+|---|---|---|
+| `sqliteTableViewer.maxFileSizeMB` | `512` | Larger files show a message instead of loading |
+| `sqliteTableViewer.copyMaxRows` | `100000` | Most rows copied to the clipboard at once |
+| `sqliteTableViewer.exportMaxRows` | `1000000` | Most rows written to one CSV or JSON export |
+| `sqliteTableViewer.askForRating` | `true` | Ask one time for a Marketplace rating, after 5 databases and 2 days. Turn it off with `false` |
+
 ## Limits
 
 - The whole file is loaded into memory, so files over 512 MB show a message instead (setting `sqliteTableViewer.maxFileSizeMB`).

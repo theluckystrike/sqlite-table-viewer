@@ -2,7 +2,7 @@
   "name": "sqlite-table-viewer",
   "displayName": "SQLite Table Viewer",
   "description": "Open SQLite databases (.db, .sqlite, .sqlite3) read-only: browse tables with paging, see the schema, run SELECT queries, view JSON and BLOB cells and export CSV. Offline.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "zovo",
   "license": "MIT",
   "icon": "icon.png",
@@ -63,6 +63,11 @@
         "sqliteTableViewer.exportMaxRows": {
           "type": "number", "default": 1000000, "minimum": 1,
           "description": "Export at most this many rows to a CSV or JSON file."
+        },
+        "sqliteTableViewer.askForRating": {
+          "type": "boolean",
+          "default": true,
+          "description": "Ask one time for a Marketplace rating after you have used SQLite Table Viewer for a few days. You can answer \"Later\" or \"Don't ask again\". Nothing is sent anywhere."
         }
       }
     },

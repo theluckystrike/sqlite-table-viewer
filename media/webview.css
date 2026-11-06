@@ -89,7 +89,7 @@ body { font-family: var(--vscode-font-family); font-size: var(--vscode-font-size
 .schema h3 { margin: 4px 0 10px; font-size: 13px; }
 .schema .k, .cellpanel .k { margin: 12px 0 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; opacity: .7; }
 .sqlpre, .cellpre { margin: 0; padding: 8px; white-space: pre-wrap; word-break: break-word; font-family: var(--vscode-editor-font-family); font-size: 12px; background: var(--vscode-textCodeBlock-background, rgba(128,128,128,.1)); border-radius: 3px; }
-.cellpre.hex { font-size: 10.5px; white-space: pre; overflow-x: auto; word-break: normal; }
+.cellpre.hex { font-size: 10.5px; white-space: pre; overflow-x: auto; word-break: normal; max-width: 100%; box-sizing: border-box; }
 .gridwrap { flex: 1; display: flex; min-height: 0; }
 .gridwrap .grid { flex: 1; }
 .cellpanel { width: 42%; max-width: 620px; min-width: 280px; flex: none; overflow: auto; padding: 8px 12px; border-left: 1px solid var(--vscode-panel-border, rgba(128,128,128,.3)); font-size: 12px; }
