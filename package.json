@@ -2,7 +2,7 @@
   "name": "sqlite-table-viewer",
   "displayName": "SQLite Viewer & DB Viewer (Read-Only)",
   "description": "Open SQLite databases (.db, .sqlite, .sqlite3) read-only. Browse tables with paging, see the schema, run SELECT queries, view JSON and BLOB cells and export CSV. Offline.",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "publisher": "zovo",
   "license": "MIT",
   "icon": "icon.png",
