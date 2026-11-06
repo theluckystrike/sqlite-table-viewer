@@ -1,10 +1,10 @@
-# SQLite Table Viewer
+# SQLite Viewer & DB Viewer (Read-Only)
 
 <a href="https://marketplace.visualstudio.com/items?itemName=zovo.sqlite-table-viewer"><img src="https://img.shields.io/visual-studio-marketplace/i/zovo.sqlite-table-viewer?label=VS%20Code%20installs" alt="VS Code installs"></a>
 <a href="https://marketplace.visualstudio.com/items?itemName=zovo.sqlite-table-viewer"><img src="https://img.shields.io/visual-studio-marketplace/v/zovo.sqlite-table-viewer?label=version" alt="Version"></a>
 <a href="https://github.com/theluckystrike/sqlite-table-viewer/blob/HEAD/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license"></a>
 
-Click a `.db` or `.sqlite` file and browse its tables, schema, JSON columns and BLOBs in a fast read-only grid that never writes to the file.
+Click a `.db` or `.sqlite` file and this SQLite viewer shows its tables, schema, JSON columns and BLOBs in a fast read-only grid that never writes to the file.
 
 <a href="https://raw.githubusercontent.com/theluckystrike/sqlite-table-viewer/main/images/orders-dark.png"><img src="https://raw.githubusercontent.com/theluckystrike/sqlite-table-viewer/main/images/orders-dark.png" alt="store.db open on the orders table, filtered to paid orders over 100000 cents and sorted by total, next to the list of 4 tables, 2 views, 3 indexes and 1 trigger with row counts" width="100%"></a>
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.3 (2026-11-07)
+
+- The Marketplace name is now "SQLite Viewer & DB Viewer (Read-Only)", so a search for SQLite viewer or DB viewer finds it. The extension ID, settings and commands stay the same.
+
 ## 0.1.2 (2026-11-06)
 
 - The status line at the bottom of the viewer ends with two small links, "Sponsor" (GitHub Sponsors) and "More free viewers". The new setting `sqliteTableViewer.showSupportLinks` (default `true`) hides them, and so does the "Hide" link next to them. There is no popup, and nothing is sent anywhere.
