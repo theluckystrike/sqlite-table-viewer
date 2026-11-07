@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1 (2026-11-08)
+
+- The "More free viewers" list and the README now use the current Marketplace names and include the newest Zovo extensions: ZIP, GCode, EPUB, HAR, font and audio viewers.
+
 ## 0.2.0 (2026-11-07)
 
 - Rows that are still in the `-wal` file now show. An app with the database open in WAL mode (Django, Rails, Prisma, Electron apps, browsers) keeps new rows in `name.db-wal` until a checkpoint. The viewer reads the committed transactions from that file into its in-memory copy, the way SQLite does, and a blue line says how many it added. A half-written transaction at the end is skipped. Neither file is written.

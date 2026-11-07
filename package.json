@@ -2,7 +2,7 @@
   "name": "sqlite-table-viewer",
   "displayName": "SQLite Viewer & DB Viewer, Database Viewer (Read-Only)",
   "description": "SQLite viewer and DB viewer for .db, .sqlite and .sqlite3 files, read-only and free. Shows rows still in the -wal file and reloads live when the app writes. Browse tables, schema, SELECT queries, JSON and BLOB cells, CSV export. Offline.",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "publisher": "zovo",
   "license": "MIT",
   "icon": "icon.png",
