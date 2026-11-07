@@ -9,7 +9,7 @@ const { sniff } = require('./core/sqlutil');
 const { createRatingPrompt } = require('./rate');
 const { registerSupport, commandUris, showLinks } = require('./support');
 
-let rating = { success() {} };
+let rating = { success() {}, failure() {} };
 
 const VIEW_TYPE = 'sqliteTableViewer.database';
 const KNOWN_EXT = /\.(db|sqlite|sqlite3|db3|s3db|sl3|vscdb|gpkg)$/i;
@@ -80,7 +80,7 @@ class DatabaseEditorProvider {
       if (webviewReady) { panel.webview.postMessage(msg); return; }
       if (!STATE_MESSAGES.has(msg.type) && !(msg.type === 'error' && !msg.transient)) queue.push(msg);
     };
-    const failHost = message => { fatal = { type: 'error', message }; toWebview(fatal); };
+    const failHost = message => { fatal = { type: 'error', message }; rating.failure(); toWebview(fatal); };
     const history = () => ctx.globalState.get(HISTORY_KEY, []);
 
     const startWorker = async () => {
@@ -95,7 +95,7 @@ class DatabaseEditorProvider {
         if (!msg) return;
         if (msg.type === 'copyResult') return onCopy(msg);
         if (msg.type === 'exportResult') return onExport(msg);
-        if (msg.type === 'error' && !msg.transient) { fatal = msg; }
+        if (msg.type === 'error' && !msg.transient) { fatal = msg; rating.failure(); }
         if (msg.type === 'opened' || msg.type === 'reloaded') lastWal = msg.wal || null;
         if (msg.type === 'reloaded' || msg.type === 'reloadFailed') reloadDone(msg);
         if (msg.type === 'meta' && !counted && !fatal) { counted = true; rating.success(); }
@@ -263,7 +263,7 @@ class DatabaseEditorProvider {
 }
 
 function activate(context) {
-  rating = createRatingPrompt({ vscode, context, extensionId: 'zovo.sqlite-table-viewer', section: 'sqliteTableViewer', message: (n) => `SQLite Table Viewer has opened ${n} databases for you. A rating helps other people find it.` });
+  rating = createRatingPrompt({ vscode, context, extensionId: 'zovo.sqlite-table-viewer', section: 'sqliteTableViewer', name: 'SQLite DB Viewer' });
   registerSupport({ vscode, context, prefix: 'sqliteTableViewer', selfId: 'zovo.sqlite-table-viewer' });
   const provider = new DatabaseEditorProvider(context);
   context.subscriptions.push(

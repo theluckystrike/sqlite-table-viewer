@@ -5,6 +5,7 @@
 - The Marketplace name is now "SQLite DB Viewer & SQLite Viewer, Database Viewer (Read-Only)", so a search for SQLite DB finds it. The extension ID, settings and commands stay the same.
 - The README and the Marketplace description now start with what was already true: it is free, with no paywall, no ads, no license banner and no sign-in.
 - A 0-byte file now says that the file is empty, instead of "This database has no tables or views".
+- The rating question now comes after 3 databases that opened without an error on 2 different days, and never after an error. "Later" asks one more time after 7 days, "No thanks" ends it, and it never asks more than 2 times. `sqliteTableViewer.askForRating: false` turns it off.
 
 ## 0.2.1 (2026-11-08)
 

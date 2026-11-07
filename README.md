@@ -69,7 +69,7 @@ Select cells by dragging or with Shift+click, or click row numbers for whole row
 | `sqliteTableViewer.copyMaxRows` | `100000` | Most rows copied to the clipboard at once |
 | `sqliteTableViewer.exportMaxRows` | `1000000` | Most rows written to one CSV or JSON export |
 | `sqliteTableViewer.autoReload` | `true` | Reload the view when the database or its `-wal` file changes. Turn it off with `false` to get a Reload notice instead |
-| `sqliteTableViewer.askForRating` | `true` | Ask one time for a Marketplace rating, after 5 databases and 2 days. Turn it off with `false` |
+| `sqliteTableViewer.askForRating` | `true` | Ask for a Marketplace rating after 3 databases opened without an error on 2 different days. "Later" asks one more time after 7 days, "No thanks" never again. It never asks after an error. Turn it off with `false`. |
 
 ## Limits
 
