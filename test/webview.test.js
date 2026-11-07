@@ -58,3 +58,9 @@ test('hex dump re-flows to 8 bytes per row for a narrow cell panel', () => {
   const big = hexDump(Uint8Array.from({ length: 4096 }, (_, i) => i & 255));
   assert.strictEqual(C.hexRows(big, 8).split('\n').length, 512);
 });
+
+test('a 0-byte file says it is empty instead of "no tables"', () => {
+  assert.match(M.emptyNote(0), /empty \(0 bytes\)/);
+  assert.match(M.emptyNote(4096), /no tables or views/);
+  assert.match(M.emptyNote(undefined), /no tables or views/);
+});

@@ -647,7 +647,7 @@ function showEmpty() {
   const o = S.objects;
   const none = o && !o.tables.length && !o.views.length;
   empty.hidden = !(none && S.tab === 'data' && !S.columns.length);
-  empty.textContent = none ? 'This database has no tables or views. Use the SQL tab for PRAGMAs, or open another file.' : '';
+  empty.textContent = none ? M.emptyNote((o.info || {}).fileSize) : '';
 }
 
 // ---------- messages ----------

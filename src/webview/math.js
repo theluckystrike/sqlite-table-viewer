@@ -158,4 +158,11 @@ function walNote(wal, fileName) {
   return { level: 'warn', text: `${f} could not be read (${wal.reason}), so changes still in it are not shown.` };
 }
 
-module.exports = { walNote, visibleColumns, columnLefts, statsRows, gutterWidth, scrollToRow, rowToScroll, pagesFor, normSel, inSel, autoWidth, nextSort, formatBytes, filtersFromMeta, viewState, restoreView, MAX_BODY_PX };
+// The note shown when the database has no tables or views. A 0-byte file is a valid, empty SQLite database
+// to SQLite itself, but the user usually has a file that was never written (or a failed download), so say so.
+function emptyNote(fileSize) {
+  if (fileSize === 0) return 'This file is empty (0 bytes), so it has no tables yet. If an app should have written it, the write may not have finished.';
+  return 'This database has no tables or views. Use the SQL tab for PRAGMAs, or open another file.';
+}
+
+module.exports = { emptyNote, walNote, visibleColumns, columnLefts, statsRows, gutterWidth, scrollToRow, rowToScroll, pagesFor, normSel, inSel, autoWidth, nextSort, formatBytes, filtersFromMeta, viewState, restoreView, MAX_BODY_PX };

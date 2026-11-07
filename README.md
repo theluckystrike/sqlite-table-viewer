@@ -1,10 +1,12 @@
-# SQLite Viewer & DB Viewer, Database Viewer (Read-Only)
+# SQLite DB Viewer & SQLite Viewer, Database Viewer (Read-Only)
 
 <a href="https://marketplace.visualstudio.com/items?itemName=zovo.sqlite-table-viewer"><img src="https://img.shields.io/visual-studio-marketplace/i/zovo.sqlite-table-viewer?label=VS%20Code%20installs" alt="VS Code installs"></a>
 <a href="https://marketplace.visualstudio.com/items?itemName=zovo.sqlite-table-viewer"><img src="https://img.shields.io/visual-studio-marketplace/v/zovo.sqlite-table-viewer?label=version" alt="Version"></a>
 <a href="https://github.com/theluckystrike/sqlite-table-viewer/blob/HEAD/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license"></a>
 
-Click a `.db` or `.sqlite` file and this SQLite viewer shows its tables, schema, JSON columns and BLOBs in a fast read-only grid. It also shows the rows your app has not checkpointed yet, and it updates while the app writes. Free, with no paid tier and no file size paywall.
+Free, with no paywall, no ads, no license banner and no sign-in. There is nothing to buy. Databases up to 512 MB open by default (a setting raises the limit).
+
+Click a `.db` or `.sqlite` file and this SQLite DB viewer shows its tables, schema, JSON columns and BLOBs in a fast read-only grid. It also shows the rows your app has not checkpointed yet, and it updates while the app writes.
 
 <a href="https://raw.githubusercontent.com/theluckystrike/sqlite-table-viewer/main/images/vscode-live-wal.png"><img src="https://raw.githubusercontent.com/theluckystrike/sqlite-table-viewer/main/images/vscode-live-wal.png" alt="VS Code with app.db open on the events table. A blue line says it includes 6 committed transactions from app.db-wal, and the Live button is on in the toolbar" width="100%"></a>
 
@@ -18,7 +20,7 @@ Click a `.db` or `.sqlite` file and this SQLite viewer shows its tables, schema,
 
 ## Quick start
 
-1. Install SQLite Viewer.
+1. Install SQLite DB Viewer.
 2. Click any `.db`, `.sqlite`, `.sqlite3`, `.db3`, `.s3db`, `.sl3`, `.vscdb` or `.gpkg` file. It opens as a table.
 
 A SQLite file with another name (`.data`, `.store`, no extension) is detected by its "SQLite format 3" header, and VS Code offers to open it here. You can also right-click any file and pick "Open in SQLite Table Viewer".

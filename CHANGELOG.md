@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.2 (2026-11-08)
+
+- The Marketplace name is now "SQLite DB Viewer & SQLite Viewer, Database Viewer (Read-Only)", so a search for SQLite DB finds it. The extension ID, settings and commands stay the same.
+- The README and the Marketplace description now start with what was already true: it is free, with no paywall, no ads, no license banner and no sign-in.
+- A 0-byte file now says that the file is empty, instead of "This database has no tables or views".
+
 ## 0.2.1 (2026-11-08)
 
 - The "More free viewers" list and the README now use the current Marketplace names and include the newest Zovo extensions: ZIP, GCode, EPUB, HAR, font and audio viewers.
