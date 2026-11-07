@@ -4,6 +4,7 @@
 // database in memory; nothing here writes to the file.
 
 const U = require('./sqlutil');
+const { applyWal } = require('./wal');
 
 const PAGE_MAX = 1000;
 const LIST_MAX = 100000;
@@ -299,6 +300,33 @@ class Session {
     return [{ type: 'exportResult', ok: true, format, text, rows: d.rows.length, truncated: d.truncated, bytes: Buffer.byteLength(text) }];
   }
 
+  // ---------- reload ----------
+  /** What the grid shows now, so a reloaded copy of the file can show the same thing. */
+  state() {
+    const s = this.source;
+    if (!s) return null;
+    return { kind: s.kind, name: s.name || null, sql: s.sql || null, sort: s.sort, filters: s.filters };
+  }
+
+  /** Show the same table or query as before a reload. Returns messages; the meta one has keep: true. */
+  restore(st) {
+    if (!st) return [];
+    let out;
+    if (st.kind === 'table' && st.name && this.findObject(st.name)) out = this.openTable(st.name);
+    else if ((st.kind === 'query' || st.kind === 'list') && st.sql) out = this.runSql(st.sql);
+    else return [];
+    if (!this.source || out.some(m => m.type === 'sqlError' || m.type === 'error')) return out.filter(m => m.type !== 'sqlDone');
+    const s = this.source;
+    if (st.sort && s.canFilter && st.sort.col < s.columns.length) s.sort = st.sort;
+    if (st.filters && s.canFilter) s.filters = st.filters;
+    let refreshed;
+    try { refreshed = this.refresh(true); } catch {
+      s.filters = { global: '', columns: {} };
+      refreshed = this.refresh(true);
+    }
+    return refreshed.map(m => (m.type === 'meta' ? { ...m, keep: true } : m));
+  }
+
   // ---------- dispatch ----------
   /** msg was checked by protocol.validateWebviewMessage. Returns messages for the host. */
   handle(msg) {
@@ -327,10 +355,18 @@ class Session {
 
 /** Open a database from its bytes, or throw an Error whose message is ready to show. */
 function openSession(SQL, bytes, opts = {}) {
+  let wal = { present: false };
+  if (opts.wal && opts.wal.length) {
+    const r = applyWal(bytes, opts.wal);
+    wal = { present: true, applied: r.applied, commits: r.commits, pages: r.pages, reason: r.reason || null };
+    if (r.applied) bytes = r.bytes;
+  }
   const kind = U.sniff(bytes);
   if (kind === 'other') throw new Error(U.notSqliteMessage(bytes, opts.fileSize || bytes.length));
   try {
-    return new Session(SQL, bytes, opts);
+    const session = new Session(SQL, bytes, opts);
+    session.wal = wal;
+    return session;
   } catch (e) {
     throw new Error(U.friendlyOpenError(e));
   }

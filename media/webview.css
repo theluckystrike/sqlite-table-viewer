@@ -17,6 +17,7 @@ body { font-family: var(--vscode-font-family); font-size: var(--vscode-font-size
 .btn.on { background: var(--vscode-button-background); color: var(--vscode-button-foreground); }
 .btn:disabled { opacity: .5; cursor: default; }
 .banner { padding: 6px 10px; background: var(--vscode-editorWarning-background, rgba(255,200,0,.12)); border-bottom: 1px solid var(--vscode-editorWarning-foreground, #cca700); display: flex; gap: 12px; align-items: center; flex: none; }
+.banner.info { background: var(--vscode-editorInfo-background, rgba(55,148,255,.10)); border-color: var(--vscode-editorInfo-foreground, #3794ff); }
 .banner.error { background: var(--vscode-inputValidation-errorBackground, rgba(255,0,0,.12)); border-color: var(--vscode-errorForeground, #f14c4c); }
 .link { background: none; border: none; color: var(--vscode-textLink-foreground); cursor: pointer; padding: 0; font: inherit; text-decoration: underline; }
 .schema { max-height: 40vh; overflow: auto; padding: 8px 10px; border-bottom: 1px solid var(--vscode-panel-border, rgba(128,128,128,.3)); flex: none; }

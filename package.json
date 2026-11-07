@@ -1,8 +1,8 @@
 {
   "name": "sqlite-table-viewer",
-  "displayName": "SQLite Viewer & DB Viewer (Read-Only)",
-  "description": "SQLite viewer and DB viewer that opens .db, .sqlite and .sqlite3 files read-only. Browse tables with paging, see the schema, run SELECT queries, view JSON and BLOB cells and export CSV. Offline.",
-  "version": "0.1.6",
+  "displayName": "SQLite Viewer & DB Viewer, Database Viewer (Read-Only)",
+  "description": "SQLite viewer and DB viewer for .db, .sqlite and .sqlite3 files, read-only and free. Shows rows still in the -wal file and reloads live when the app writes. Browse tables, schema, SELECT queries, JSON and BLOB cells, CSV export. Offline.",
+  "version": "0.2.0",
   "publisher": "zovo",
   "license": "MIT",
   "icon": "icon.png",
@@ -22,13 +22,13 @@
   "keywords": [
     "sqlite viewer",
     "db viewer",
+    "database viewer",
+    "sqlite",
     "sqlite db",
     "db file",
     "sqlite reader",
     "sqlite explorer",
-    "sqlite",
     "sqlite browser",
-    "database viewer",
     "sqlite3",
     "database",
     "db",
@@ -36,8 +36,10 @@
     "query",
     "table",
     "schema",
-    "viewer",
     "read only",
+    "wal",
+    "sqlite wal",
+    "live reload",
     "db3",
     "vscdb",
     "geopackage",
@@ -46,8 +48,6 @@
     "blob",
     "embeddings",
     "offline",
-    "indexes",
-    "views",
     "table viewer",
     "data browser"
   ],
@@ -147,6 +147,11 @@
           "default": 1000000,
           "minimum": 1,
           "description": "Export at most this many rows to a CSV or JSON file."
+        },
+        "sqliteTableViewer.autoReload": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Reload the view when the database file or its `-wal` file changes on disk. The table, sort, filters and scroll position stay. Turn it off with `false` to get a Reload notice instead."
         },
         "sqliteTableViewer.askForRating": {
           "type": "boolean",

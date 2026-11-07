@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0 (2026-11-07)
+
+- Rows that are still in the `-wal` file now show. An app with the database open in WAL mode (Django, Rails, Prisma, Electron apps, browsers) keeps new rows in `name.db-wal` until a checkpoint. The viewer reads the committed transactions from that file into its in-memory copy, the way SQLite does, and a blue line says how many it added. A half-written transaction at the end is skipped. Neither file is written.
+- Live reload. When the database or its `-wal` file changes on disk, the view reloads by itself and keeps the table, sort, filters, scroll position and open cell. The "Live" button turns this off (setting `sqliteTableViewer.autoReload`), and then a notice with a Reload button shows instead. "Reload" in the toolbar reads the file again at any time.
+- If a reload fails because the file is in the middle of a write, the old view stays on screen and the viewer tries once more.
+
 ## 0.1.6 (2026-11-07)
 
 - "More free viewers" now starts with the Zovo extensions most related to this one. Picking one opens its Marketplace page, where you choose to install it.

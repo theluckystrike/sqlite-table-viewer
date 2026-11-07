@@ -13,8 +13,10 @@ const isStr = (v, max) => typeof v === 'string' && v.length <= max;
 function validateWebviewMessage(m) {
   if (!m || typeof m !== 'object' || typeof m.type !== 'string') return null;
   switch (m.type) {
-    case 'ready': case 'openSettings': case 'objects':
+    case 'ready': case 'openSettings': case 'objects': case 'reload':
       return { type: m.type };
+    case 'setAutoReload':
+      return typeof m.on === 'boolean' ? { type: 'setAutoReload', on: m.on } : null;
     case 'openTable': case 'count': case 'schema':
       return isStr(m.name, MAX_NAME) && m.name ? { type: m.type, name: m.name } : null;
     case 'runSql':

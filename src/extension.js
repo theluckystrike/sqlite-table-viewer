@@ -13,7 +13,7 @@ let rating = { success() {} };
 
 const VIEW_TYPE = 'sqliteTableViewer.database';
 const KNOWN_EXT = /\.(db|sqlite|sqlite3|db3|s3db|sl3|vscdb|gpkg)$/i;
-const STATE_MESSAGES = new Set(['meta', 'view', 'rows', 'objects']);
+const STATE_MESSAGES = new Set(['meta', 'view', 'rows', 'objects', 'reloaded', 'reloadFailed']);
 const HISTORY_KEY = 'sqliteTableViewer.history';
 const HISTORY_MAX = 20;
 
@@ -23,6 +23,7 @@ function settings() {
     maxFileSizeMB: c.get('maxFileSizeMB', 512),
     copyMaxRows: c.get('copyMaxRows', 100000),
     exportMaxRows: c.get('exportMaxRows', 1000000),
+    autoReload: c.get('autoReload', true),
   };
 }
 
@@ -88,30 +89,90 @@ class DatabaseEditorProvider {
       if (stat.size > limit) {
         throw new Error(`This database is ${(stat.size / 1048576).toFixed(0)} MB. SQLite Table Viewer loads the whole file into memory, and the limit is ${opts.maxFileSizeMB} MB (setting sqliteTableViewer.maxFileSizeMB). Open a smaller copy, or raise the limit if this machine has the memory.`);
       }
-      let source;
-      if (uri.scheme === 'file') {
-        source = { path: uri.fsPath };
-        try {
-          const wal = fs.statSync(uri.fsPath + '-wal');
-          if (wal.size > 0) warnings.push(`A ${name}-wal file sits next to this database: uncommitted WAL changes are not shown. Rows written since the last checkpoint are missing until the app that owns the database checkpoints or closes it.`);
-        } catch { /* no WAL file */ }
-      } else {
-        source = { bytes: await vscode.workspace.fs.readFile(uri) };
-      }
+      const source = await readSource();
       worker = new Worker(path.join(ctx.extensionPath, 'dist', 'worker.js'), { resourceLimits: { maxOldGenerationSizeMb: 4096 } });
       worker.on('message', msg => {
         if (!msg) return;
         if (msg.type === 'copyResult') return onCopy(msg);
         if (msg.type === 'exportResult') return onExport(msg);
         if (msg.type === 'error' && !msg.transient) { fatal = msg; }
+        if (msg.type === 'opened' || msg.type === 'reloaded') lastWal = msg.wal || null;
+        if (msg.type === 'reloaded' || msg.type === 'reloadFailed') reloadDone(msg);
         if (msg.type === 'meta' && !counted && !fatal) { counted = true; rating.success(); }
         toWebview(msg);
       });
       worker.on('error', e => failHost(`The reader stopped: ${e.message}`));
       worker.on('exit', code => { if (!disposed && code !== 0 && !fatal) failHost('The reader ran out of memory or crashed. Lower sqliteTableViewer.maxFileSizeMB and reopen the file.'); });
-      worker.postMessage({ type: 'open', source, options: { fileSize: stat.size, copyMaxRows: opts.copyMaxRows, exportMaxRows: opts.exportMaxRows } });
+      worker.postMessage({ type: 'open', source, options: workerOptions(stat.size) });
       if (warnings.length) toWebview({ type: 'warnings', warnings });
     };
+
+    const workerOptions = size => ({ fileSize: size, copyMaxRows: opts.copyMaxRows, exportMaxRows: opts.exportMaxRows });
+    // Local files are read by the worker itself (with their -wal). Other file systems are read here.
+    const readSource = async () => {
+      if (uri.scheme === 'file') return { path: uri.fsPath };
+      const bytes = await vscode.workspace.fs.readFile(uri);
+      let wal = null;
+      try { wal = await vscode.workspace.fs.readFile(uri.with({ path: uri.path + '-wal' })); } catch { /* no WAL file */ }
+      return { bytes, wal };
+    };
+
+    // ---------- reload when the file or its -wal changes ----------
+    let lastWal = null;
+    let reloading = false;
+    let reloadAgain = null;
+    let retried = false;
+    const reload = async reason => {
+      if (!worker || fatal || disposed) return;
+      if (reloading) { reloadAgain = reason; return; }
+      reloading = true;
+      try {
+        const stat = await vscode.workspace.fs.stat(uri);
+        if (stat.size > opts.maxFileSizeMB * 1024 * 1024) throw new Error(`The file grew past ${opts.maxFileSizeMB} MB (sqliteTableViewer.maxFileSizeMB), so it was not reloaded.`);
+        worker.postMessage({ type: 'reload', reason, source: await readSource(), options: workerOptions(stat.size) });
+      } catch (e) {
+        reloading = false;
+        toWebview({ type: 'reloadFailed', message: e.message || String(e) });
+      }
+    };
+    const reloadDone = msg => {
+      reloading = false;
+      if (msg.type === 'reloadFailed' && !retried && !reloadAgain) {
+        // A write in progress can leave the file half-updated for a moment. Try once more.
+        retried = true;
+        setTimeout(() => reload('file'), 1500);
+        return;
+      }
+      retried = false;
+      if (reloadAgain) { const r = reloadAgain; reloadAgain = null; reload(r); }
+    };
+    let changeTimer = null;
+    const onFileChange = () => {
+      if (disposed) return;
+      clearTimeout(changeTimer);
+      changeTimer = setTimeout(() => {
+        if (settings().autoReload) reload('file');
+        else toWebview({ type: 'fileChanged' });
+      }, 300);
+    };
+    const watchers = [];
+    try {
+      if (uri.scheme === 'file') {
+        // A stat of the database and its -wal once a second. VS Code's file watcher and fs.watch both
+        // missed writes from another process on macOS (VS Code 1.142, a Python WAL writer), so poll.
+        for (const f of [uri.fsPath, uri.fsPath + '-wal']) {
+          const onStat = (cur, prev) => { if (cur.mtimeMs !== prev.mtimeMs || cur.size !== prev.size) onFileChange(); };
+          fs.watchFile(f, { interval: 1000, persistent: false }, onStat);
+          watchers.push({ dispose: () => fs.unwatchFile(f, onStat) });
+        }
+      } else {
+        const dirUri = vscode.Uri.joinPath(uri, '..');
+        for (const f of [name, name + '-wal']) {
+          const w = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(dirUri, f));
+          watchers.push(w, w.onDidChange(onFileChange), w.onDidCreate(onFileChange), w.onDidDelete(onFileChange));
+        }
+      }
+    } catch { /* this file system cannot be watched; the Reload button still works */ }
 
     const onCopy = async msg => {
       await vscode.env.clipboard.writeText(msg.text || '');
@@ -166,12 +227,21 @@ class DatabaseEditorProvider {
         webviewReady = true;
         panel.webview.postMessage({ type: 'init', fileName: name, history: history() });
         if (warnings.length) panel.webview.postMessage({ type: 'warnings', warnings });
+        panel.webview.postMessage({ type: 'settings', autoReload: settings().autoReload });
+        if (lastWal) panel.webview.postMessage({ type: 'wal', wal: lastWal });
         while (queue.length) { const q = queue.shift(); if (q.type !== 'warnings') panel.webview.postMessage(q); }
         if (fatal) panel.webview.postMessage(fatal);
         else if (worker) worker.postMessage({ type: 'resync' });
         return;
       }
       if (msg.type === 'openSettings') { vscode.commands.executeCommand('workbench.action.openSettings', 'sqliteTableViewer'); return; }
+      if (msg.type === 'reload') { reload('manual'); return; }
+      if (msg.type === 'setAutoReload') {
+        await vscode.workspace.getConfiguration('sqliteTableViewer').update('autoReload', msg.on, vscode.ConfigurationTarget.Global);
+        toWebview({ type: 'settings', autoReload: msg.on });
+        if (msg.on) reload('manual');
+        return;
+      }
       if (msg.type === 'export') { startExport(msg.format); return; }
       if (msg.type === 'runSql') {
         const h = [msg.sql.trim(), ...history().filter(s => s !== msg.sql.trim())].slice(0, HISTORY_MAX);
@@ -183,6 +253,8 @@ class DatabaseEditorProvider {
 
     panel.onDidDispose(() => {
       disposed = true;
+      clearTimeout(changeTimer);
+      watchers.forEach(w => w.dispose());
       if (worker) worker.terminate();
     });
 
@@ -231,4 +303,4 @@ function activate(context) {
 
 function deactivate() {}
 
-module.exports = { activate, deactivate, KNOWN_EXT, VIEW_TYPE };
+module.exports = { activate, deactivate, KNOWN_EXT, VIEW_TYPE, DatabaseEditorProvider };

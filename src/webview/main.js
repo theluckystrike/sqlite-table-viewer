@@ -18,6 +18,7 @@ const S = {
   rowCount: 0, version: -1, sort: null, filters: { global: '', columns: {} }, canFilter: true,
   cache: new Map(), pending: new Map(), reqId: 1, anchor: null, focus: null, dragging: false,
   tab: 'data', error: '', warnings: [], history: [], cellOpen: false, schema: null, timing: '',
+  wal: null, autoReload: true, changed: false,
 };
 
 function el(tag, cls, text) {
@@ -56,7 +57,19 @@ const btnInsert = el('button', 'btn', 'Copy INSERT');
 btnInsert.title = 'Copy the selected rows (all columns) as INSERT statements';
 const btnExport = el('button', 'btn', 'Export');
 btnExport.title = 'Save every row in view (filtered and sorted) as CSV or JSON';
-toolbar.append(title, roBadge, stats, spacer, tabs, search, btnCsv, btnJson, btnInsert, btnExport);
+const btnReload = el('button', 'btn', '↻ Reload');
+btnReload.title = 'Read the file and its -wal again. The table, sort, filters and scroll position stay.';
+const btnLive = el('button', 'btn', 'Live');
+btnLive.title = 'Live: reload by itself when the file or its -wal changes (setting sqliteTableViewer.autoReload)';
+toolbar.append(title, roBadge, stats, spacer, tabs, search, btnReload, btnLive, btnCsv, btnJson, btnInsert, btnExport);
+btnReload.addEventListener('click', () => { flash('Reloading…', true); vscode.postMessage({ type: 'reload' }); });
+btnLive.addEventListener('click', () => vscode.postMessage({ type: 'setAutoReload', on: !S.autoReload }));
+function renderLive() {
+  btnLive.classList.toggle('on', S.autoReload);
+  btnLive.textContent = S.autoReload ? '● Live' : '○ Live';
+  btnLive.setAttribute('aria-pressed', String(S.autoReload));
+}
+renderLive();
 
 const banners = el('div', 'banners');
 const main = el('div', 'main');
@@ -618,6 +631,15 @@ function renderBanners() {
     banners.append(b);
   };
   for (const w of S.warnings) add(w, 'warn');
+  const note = M.walNote(S.wal, S.fileName);
+  if (note) add(note.text, note.level);
+  if (S.changed) {
+    const b = el('div', 'banner warn');
+    const go = el('button', 'link', 'Reload');
+    go.addEventListener('click', () => { S.changed = false; renderBanners(); vscode.postMessage({ type: 'reload' }); });
+    b.append(el('span', null, 'The file changed on disk.'), go);
+    banners.append(b);
+  }
   if (S.error) add(S.error, 'error');
 }
 
@@ -649,7 +671,32 @@ window.addEventListener('message', ev => {
       break;
     case 'opened':
       S.timing = `Opened in ${fmtN(msg.ms)} ms`;
+      S.wal = msg.wal || null;
+      renderBanners();
       updateStatus();
+      break;
+    case 'wal':
+      S.wal = msg.wal || null;
+      renderBanners();
+      break;
+    case 'settings':
+      S.autoReload = !!msg.autoReload;
+      renderLive();
+      break;
+    case 'reloaded':
+      S.wal = msg.wal || null;
+      S.changed = false;
+      S.timing = `Reloaded ${new Date().toLocaleTimeString()} in ${fmtN(msg.ms)} ms`;
+      renderBanners();
+      flash(msg.reason === 'manual' ? 'Reloaded' : 'The file changed. Reloaded.');
+      updateStatus();
+      break;
+    case 'reloadFailed':
+      flash(`Not reloaded: ${msg.message}`);
+      break;
+    case 'fileChanged':
+      S.changed = true;
+      renderBanners();
       break;
     case 'objects': {
       const first = !S.objects;
@@ -661,6 +708,9 @@ window.addEventListener('message', ev => {
       break;
     }
     case 'meta': {
+      // keep: the same view after a reload. Scroll position and column widths stay.
+      const keep = !!msg.keep && S.columns.length === msg.columns.length && S.columns.every((c, i) => c.name === msg.columns[i].name);
+      const scroll = keep ? { top: grid.scrollTop, left: grid.scrollLeft, widths: S.widths } : null;
       S.version = msg.version;
       S.source = msg.source;
       S.columns = msg.columns;
@@ -671,22 +721,29 @@ window.addEventListener('message', ev => {
       S.rowCount = msg.viewCount;
       S.cache.clear();
       S.pending.clear();
-      S.anchor = S.focus = null;
-      S.widths = S.columns.map(c => M.autoWidth(c.name, (c.declared || (c.type === 'any' ? '' : c.type)) + (c.pk ? ' · PK' : ''), []));
-      S.autoSized = false;
+      if (!scroll) S.anchor = S.focus = null;
+      S.widths = scroll ? scroll.widths : S.columns.map(c => M.autoWidth(c.name, (c.declared || (c.type === 'any' ? '' : c.type)) + (c.pk ? ' · PK' : ''), []));
+      S.autoSized = !!scroll;
       rowPool.length = 0;
       body.textContent = '';
       grid.scrollTop = 0;
       grid.scrollLeft = 0;
       GUTTER_W = M.gutterWidth(S.rowCount);
       app.style.setProperty('--gutter-w', GUTTER_W + 'px');
-      if (S.cellOpen) closeCell();
+      if (S.cellOpen && !scroll) closeCell();
       buildHeader();
+      if (scroll) applyWidths();
       gridWrap.hidden = S.tab === 'schema' || !S.columns.length;
       renderSide();
       showEmpty();
       updateStatus();
       layout();
+      if (scroll) {
+        grid.scrollTop = scroll.top;
+        grid.scrollLeft = scroll.left;
+        if (S.cellOpen) requestCell();
+        schedule();
+      }
       break;
     }
     case 'rows': {

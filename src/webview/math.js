@@ -146,4 +146,16 @@ function columnLefts(widths) {
   return left;
 }
 
-module.exports = { visibleColumns, columnLefts, statsRows, gutterWidth, scrollToRow, rowToScroll, pagesFor, normSel, inSel, autoWidth, nextSort, formatBytes, filtersFromMeta, viewState, restoreView, MAX_BODY_PX };
+/** Banner for the -wal file next to the database, or null. wal comes from the worker's open/reload. */
+function walNote(wal, fileName) {
+  if (!wal || !wal.present) return null;
+  const f = `${fileName || 'the database'}-wal`;
+  if (wal.applied) {
+    const n = wal.commits;
+    return { level: 'info', text: `Includes ${n.toLocaleString('en-US')} committed ${n === 1 ? 'transaction' : 'transactions'} from ${f} that ${n === 1 ? 'is' : 'are'} not yet checkpointed into the file. Nothing is written to either file.` };
+  }
+  if (wal.reason === 'empty' || wal.reason === 'no committed changes') return null;
+  return { level: 'warn', text: `${f} could not be read (${wal.reason}), so changes still in it are not shown.` };
+}
+
+module.exports = { walNote, visibleColumns, columnLefts, statsRows, gutterWidth, scrollToRow, rowToScroll, pagesFor, normSel, inSel, autoWidth, nextSort, formatBytes, filtersFromMeta, viewState, restoreView, MAX_BODY_PX };

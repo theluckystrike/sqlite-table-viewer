@@ -100,6 +100,9 @@ test('empty, WAL, corrupt, encrypted and text files', () => {
   const wal = openSession(SQL, read('wal-mode.db'));
   assert.strictEqual(wal.objectsMessage().tables[0].rows, 100); // the 25 rows in the -wal file are not seen
   assert.ok(fs.statSync(path.join(dir, 'wal-mode.db-wal')).size > 0);
+  const withWal = openSession(SQL, read('wal-mode.db'), { wal: read('wal-mode.db-wal') });
+  assert.strictEqual(withWal.objectsMessage().tables[0].rows, 125); // the worker reads the -wal too
+  assert.strictEqual(withWal.wal.applied, true);
   assert.throws(() => openSession(SQL, read('corrupt.db')), /damaged/);
   assert.throws(() => openSession(SQL, read('encrypted.db')), /encrypted/);
   assert.throws(() => openSession(SQL, read('not-sqlite.db')), /plain text/);
