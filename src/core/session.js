@@ -10,6 +10,10 @@ const PAGE_MAX = 1000;
 const LIST_MAX = 100000;
 const COUNT_ALL_BELOW = 100 * 1024 * 1024; // count every table exactly when the file is smaller
 const COUNT_VIEWS_BELOW = 20 * 1024 * 1024;
+// Views and SQL-box queries can return rows without end (WITH RECURSIVE with no stop). Their counts stop at a cap,
+// so a crafted or careless view cannot keep the worker busy forever.
+const VIEW_LIST_COUNT_CAP = 1000000; // the object list shows the button "count" above this
+const ROW_COUNT_CAP = 10000000; // paging over a view or query stops here
 
 function now() { return Number(process.hrtime.bigint() / 1000000n); }
 
@@ -64,7 +68,7 @@ class Session {
         else if (stats && stats.has(name)) { t.rows = stats.get(name); t.estimate = true; }
         out.tables.push(t);
       } else if (type === 'view') {
-        out.views.push({ name, rows: this.fileSize < COUNT_VIEWS_BELOW ? this.safeCount(name) : null });
+        out.views.push({ name, rows: this.fileSize < COUNT_VIEWS_BELOW ? this.safeCount(name, this.opts.viewListCountCap || VIEW_LIST_COUNT_CAP) : null });
       } else if (type === 'index') {
         out.indexes.push({ name, table: tbl, unique: /^create\s+unique/i.test(s.trim()), sql: s });
       } else if (type === 'trigger') {
@@ -74,8 +78,13 @@ class Session {
     return out;
   }
 
-  safeCount(name) {
-    try { return Number(this.one(`SELECT COUNT(*) FROM ${U.quoteIdent(name)}`)); } catch { return null; }
+  /** Exact row count, or with cap: the count when it is at most cap, else null. */
+  safeCount(name, cap) {
+    try {
+      if (!cap) return Number(this.one(`SELECT COUNT(*) FROM ${U.quoteIdent(name)}`));
+      const n = Number(this.one(`SELECT COUNT(*) FROM (SELECT 1 FROM ${U.quoteIdent(name)} LIMIT ${cap + 1})`));
+      return n > cap ? null : n;
+    } catch { return null; }
   }
 
   objectsMessage() {
@@ -175,7 +184,9 @@ class Session {
       this.viewCount = s.list.length;
     } else {
       const w = this.whereSql();
-      this.viewCount = Number(this.one(`SELECT COUNT(*) FROM ${s.from}${w.sql}`, w.params));
+      this.viewCount = s.isTable
+        ? Number(this.one(`SELECT COUNT(*) FROM ${s.from}${w.sql}`, w.params))
+        : Number(this.one(`SELECT COUNT(*) FROM (SELECT 1 FROM ${s.from}${w.sql} LIMIT ${this.opts.rowCountCap || ROW_COUNT_CAP})`, w.params));
     }
     const ms = now() - t0;
     if (!isNew) return [{ type: 'view', version: this.version, viewCount: this.viewCount, sort: s.sort, ms }];

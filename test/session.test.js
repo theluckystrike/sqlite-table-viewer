@@ -107,3 +107,27 @@ test('empty, WAL, corrupt, encrypted and text files', () => {
   assert.throws(() => openSession(SQL, read('encrypted.db')), /encrypted/);
   assert.throws(() => openSession(SQL, read('not-sqlite.db')), /plain text/);
 });
+
+// VER7 red team (2026-11-08): a view that never stops (WITH RECURSIVE without a limit) kept the worker busy
+// forever when the file opened, because every view was counted. The counts now stop at a cap.
+test('an endless recursive view does not hang the object list or paging', () => {
+  const db = new SQL.Database();
+  db.run('CREATE TABLE t(a); INSERT INTO t VALUES (1); CREATE VIEW forever AS WITH RECURSIVE c(x) AS (SELECT 1 UNION ALL SELECT x + 1 FROM c) SELECT x FROM c; CREATE VIEW small AS SELECT a FROM t;');
+  const bytes = db.export(); db.close();
+  const t0 = Date.now();
+  const s = openSession(SQL, bytes, { viewListCountCap: 1000, rowCountCap: 5000 });
+  const o = s.objectsMessage();
+  assert.deepStrictEqual(o.views.map(v => [v.name, v.rows]), [['forever', null], ['small', 1]]);
+  const meta = s.handle({ type: 'openTable', name: 'forever' })[0];
+  assert.strictEqual(meta.viewCount, 5000);
+  assert.strictEqual(s.handle({ type: 'getRows', reqId: 1, start: 0, count: 3 })[0].rows.length, 3);
+  const q = s.handle({ type: 'runSql', sql: 'WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n) SELECT i FROM n' });
+  assert.strictEqual(q[0].viewCount, 5000);
+  assert.strictEqual(s.handle({ type: 'openTable', name: 'small' })[0].viewCount, 1);
+  assert.ok(Date.now() - t0 < 5000, `took ${Date.now() - t0} ms`);
+  // The default caps also return, in a few seconds at most.
+  const t1 = Date.now();
+  const d = openSession(SQL, bytes);
+  assert.strictEqual(d.objectsMessage().views[0].rows, null);
+  assert.ok(Date.now() - t1 < 10000, `default cap took ${Date.now() - t1} ms`);
+});
