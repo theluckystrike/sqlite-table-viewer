@@ -4,7 +4,7 @@
 
 - The Marketplace name is now "SQLite Viewer & SQLite3 DB File Browser, Database Explorer" (was "SQLite DB Viewer & SQLite Viewer, Database Viewer (Read-Only)"), so more searches find it. The extension ID, settings and commands stay the same.
 - The short description now starts with what the name does not say: free and read-only, with no paywall, ads or sign-in.
-- No change to how files open or look.
+- A brighter icon with the file type on it, easier to spot in the Extensions view. No change to how files open or look.
 
 ## 0.2.2 (2026-11-08)
 
