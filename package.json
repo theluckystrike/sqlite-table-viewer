@@ -1,8 +1,8 @@
 {
   "name": "sqlite-table-viewer",
-  "displayName": "SQLite DB Viewer & SQLite Viewer, Database Viewer (Read-Only)",
-  "description": "Free SQLite DB viewer and SQLite viewer: no paywall, no ads, no license banner. Opens .db, .sqlite and .sqlite3 files read-only, shows rows still in the -wal file and reloads live when the app writes. Tables, schema, SELECT queries, JSON and BLOB cells, CSV export. Offline.",
-  "version": "0.2.2",
+  "displayName": "SQLite Viewer & SQLite3 DB File Browser, Database Explorer",
+  "description": "Free and read-only. No paywall, ads or sign-in. SQLite DB viewer and SQLite viewer for .db, .sqlite and .sqlite3 files: shows rows still in the -wal file and reloads live when the app writes. Tables, schema, SELECT queries, JSON and BLOB cells, CSV export. Offline, no license banner.",
+  "version": "0.2.3",
   "publisher": "zovo",
   "license": "MIT",
   "icon": "icon.png",

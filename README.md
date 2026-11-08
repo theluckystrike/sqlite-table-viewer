@@ -1,4 +1,4 @@
-# SQLite DB Viewer & SQLite Viewer, Database Viewer (Read-Only)
+# SQLite Viewer & SQLite3 DB File Browser, Database Explorer
 
 <a href="https://marketplace.visualstudio.com/items?itemName=zovo.sqlite-table-viewer"><img src="https://img.shields.io/visual-studio-marketplace/i/zovo.sqlite-table-viewer?label=VS%20Code%20installs" alt="VS Code installs"></a>
 <a href="https://marketplace.visualstudio.com/items?itemName=zovo.sqlite-table-viewer"><img src="https://img.shields.io/visual-studio-marketplace/v/zovo.sqlite-table-viewer?label=version" alt="Version"></a>
