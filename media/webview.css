@@ -137,3 +137,7 @@ body { font-family: var(--vscode-font-family); font-size: var(--vscode-font-size
 .previewtable td { white-space: pre; max-width: 240px; overflow: hidden; text-overflow: ellipsis; }
 .progress { height: 8px; border-radius: 4px; background: color-mix(in srgb, var(--vscode-foreground) 12%, transparent); margin: 10px 0 6px; max-width: 520px; overflow: hidden; }
 .progressin { height: 100%; background: var(--vscode-progressBar-background, #0e70c0); transition: width .2s; }
+.btn.protools { display: inline-flex; align-items: center; gap: 5px; }
+.btn.protools[hidden] { display: none; }
+.probadge { font-size: 9px; font-weight: 700; letter-spacing: .5px; padding: 0 4px; border-radius: 3px; line-height: 14px; background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); }
+.probadge[hidden] { display: none; }

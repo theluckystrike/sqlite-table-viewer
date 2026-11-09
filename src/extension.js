@@ -10,8 +10,10 @@ const { createRatingPrompt } = require('./rate');
 const { registerSupport, commandUris, showLinks } = require('./support');
 const { createEditHost, emptyDatabase } = require('./editHost');
 const { createPro } = require('./pro');
+const { createProTools } = require('./proHost');
 
-let pro = { enabled: false, isPro: () => true, require: async () => true };
+let pro = { enabled: false, isPro: () => true, require: async () => true, state: () => ({ enabled: false, licensed: true, visible: false }), onDidChange: () => ({ dispose() {} }) };
+let proTools = null;
 
 let rating = { success() {}, failure() {} };
 
@@ -247,7 +249,9 @@ class DatabaseEditorProvider {
       if (!msg) return;
       if (msg.type === 'ready') {
         webviewReady = true;
-        panel.webview.postMessage({ type: 'init', fileName: name, history: history(), canEdit: uri.scheme === 'file', proEnabled: pro.enabled, isPro: pro.isPro() });
+        // proEnabled stays false: the 0.3.0 table tools it marked are free. The 0.4.0 Pro tools use the 'pro' message.
+        panel.webview.postMessage({ type: 'init', fileName: name, history: history(), canEdit: uri.scheme === 'file', proEnabled: false, isPro: true });
+        panel.webview.postMessage({ type: 'pro', ...pro.state(), local: uri.scheme === 'file' });
         if (warnings.length) panel.webview.postMessage({ type: 'warnings', warnings });
         panel.webview.postMessage({ type: 'settings', autoReload: settings().autoReload });
         if (lastWal) panel.webview.postMessage({ type: 'wal', wal: lastWal });
@@ -265,6 +269,7 @@ class DatabaseEditorProvider {
         return;
       }
       if (msg.type === 'export') { startExport(msg.format); return; }
+      if (msg.type === 'proTools') { if (proTools) proTools.pick(uri); return; }
       if (editHost.handle(msg)) return;
       if (msg.type === 'runSql') {
         const h = [msg.sql.trim(), ...history().filter(s => s !== msg.sql.trim())].slice(0, HISTORY_MAX);
@@ -274,7 +279,9 @@ class DatabaseEditorProvider {
       if (worker) worker.postMessage(msg);
     });
 
+    const proSub = pro.onDidChange(s => { if (!disposed) panel.webview.postMessage({ type: 'pro', ...s, local: uri.scheme === 'file' }); });
     panel.onDidDispose(() => {
+      proSub.dispose();
       if (editHost.pending > 0) {
         vscode.window.showWarningMessage(`${name} was closed with ${editHost.pending} unsaved change${editHost.pending === 1 ? '' : 's'}. They were dropped, and the file was not changed.`);
       }
@@ -290,6 +297,8 @@ class DatabaseEditorProvider {
 
 function activate(context) {
   pro = createPro({ vscode, context });
+  proTools = createProTools({ vscode, pro, extensionPath: context.extensionPath });
+  proTools.register(context);
   rating = createRatingPrompt({ vscode, context, extensionId: 'zovo.sqlite-table-viewer', section: 'sqliteTableViewer', name: 'SQLite Editor' });
   registerSupport({ vscode, context, prefix: 'sqliteTableViewer', selfId: 'zovo.sqlite-table-viewer' });
   const provider = new DatabaseEditorProvider(context);

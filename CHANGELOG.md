@@ -1,6 +1,19 @@
 # Changelog
 
-## 0.3.0 (2026-11-09)
+## 0.4.0 (2026-11-10)
+
+- 0.3.0 was never published on its own. 0.4.0 has everything listed under 0.3.0 below: editing, safe Save, CSV import and SQL export.
+- Optional Zovo Pro (USD 19 once, all Zovo extensions) with three new tools, each with 3 free tries on every computer. A try counts only when the tool wrote its files.
+  - Compare with another database: schema and rows, matched by primary key or rowid. Writes a Markdown report and a SQL script that makes the second database match the first. The script is opened, never run.
+  - ER diagram and schema document: SVG and Mermaid diagram of the tables and foreign keys, and a Markdown document of every table.
+  - Export all tables: one Excel workbook with a sheet per table, or one CSV file per table.
+- Everything that is free stays free, including the table tools (add, rename and drop columns, rename a table, find and replace) and the CSV column transforms.
+- A "DB tools" button with a small PRO badge in the editor toolbar, and the same tools in the Command Palette and the Explorer menu of a database file. Nothing about Pro shows when a database opens. The setting `sqliteTableViewer.showProFeatures` (default `true`) hides them.
+- New setting `sqliteTableViewer.compareMaxStatements` (1,000,000).
+- In Cursor, Windsurf, VSCodium and other editors that install from Open VSX, "Rate" opens the Open VSX review page. VS Code still opens the Marketplace page. The rating question also comes to people who keep one window open for days.
+- "More free viewers" now starts with the Zovo extensions most related to this one. The README lists them under "More tools by Zovo".
+
+## 0.3.0 (2026-11-09, not published, shipped in 0.4.0)
 
 - Support links: PayPal next to GitHub Sponsors. "More free viewers" lists the XLSX viewer and the Spreadsheet Editor first.
 - Editing. A database still opens read-only. Click "Enable editing" to change it. Before that it tells you when another program has the file open, when the `-wal` file holds transactions that are not in the main file yet, or when a `-journal` shows a write in progress.

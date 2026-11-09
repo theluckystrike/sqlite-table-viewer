@@ -2,7 +2,7 @@
   "name": "sqlite-table-viewer",
   "displayName": "SQLite Editor & Viewer, SQLite3 Database Browser (Edit Cells, CSV Import)",
   "description": "Free, no paywall, no sign-in, works offline. Opens .db and .sqlite files read-only; click Enable editing to change cells and rows, run INSERT or UPDATE, and import a 1M-row CSV. Every change is staged with Undo, and Save makes a backup and writes atomically. Reads the -wal file, live reload, JSON and BLOB cells, export to CSV, JSON or SQL.",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "publisher": "zovo",
   "license": "MIT",
   "icon": "icon.png",
@@ -123,6 +123,26 @@
         "category": "SQLite Editor"
       },
       {
+        "command": "sqliteTableViewer.proTools",
+        "title": "Pro tools: compare, ER diagram, export all tables…",
+        "category": "SQLite Editor"
+      },
+      {
+        "command": "sqliteTableViewer.compareDatabases",
+        "title": "Compare with another database (Zovo Pro)…",
+        "category": "SQLite Editor"
+      },
+      {
+        "command": "sqliteTableViewer.erDiagram",
+        "title": "ER diagram and schema document (Zovo Pro)…",
+        "category": "SQLite Editor"
+      },
+      {
+        "command": "sqliteTableViewer.exportAllTables",
+        "title": "Export all tables to Excel or CSV (Zovo Pro)…",
+        "category": "SQLite Editor"
+      },
+      {
         "command": "sqliteTableViewer.enterLicenseKey",
         "title": "Zovo: Enter license key",
         "category": "SQLite Editor"
@@ -135,6 +155,11 @@
       {
         "command": "sqliteTableViewer.unlockWithSponsors",
         "title": "Zovo: Unlock Pro with GitHub Sponsors",
+        "category": "SQLite Editor"
+      },
+      {
+        "command": "sqliteTableViewer.payWithPayPal",
+        "title": "Zovo: Pay for Pro with PayPal",
         "category": "SQLite Editor"
       },
       {
@@ -154,24 +179,49 @@
           "command": "sqliteTableViewer.csvToNewDatabase",
           "when": "resourceExtname =~ /^\\.(csv|tsv|tab|psv)$/i",
           "group": "navigation@22"
+        },
+        {
+          "command": "sqliteTableViewer.proTools",
+          "when": "resourceExtname =~ /^\\.(db|sqlite|sqlite3|db3|s3db|sl3|vscdb|gpkg)$/i && sqliteTableViewer.proVisible",
+          "group": "navigation@23"
         }
       ],
       "commandPalette": [
         {
+          "command": "sqliteTableViewer.proTools",
+          "when": "sqliteTableViewer.proVisible"
+        },
+        {
+          "command": "sqliteTableViewer.compareDatabases",
+          "when": "sqliteTableViewer.proVisible"
+        },
+        {
+          "command": "sqliteTableViewer.erDiagram",
+          "when": "sqliteTableViewer.proVisible"
+        },
+        {
+          "command": "sqliteTableViewer.exportAllTables",
+          "when": "sqliteTableViewer.proVisible"
+        },
+        {
           "command": "sqliteTableViewer.enterLicenseKey",
-          "when": "sqliteTableViewer.proEnabled"
+          "when": "sqliteTableViewer.proEnabled && sqliteTableViewer.proVisible"
         },
         {
           "command": "sqliteTableViewer.getPro",
-          "when": "sqliteTableViewer.proEnabled"
+          "when": "sqliteTableViewer.proEnabled && sqliteTableViewer.proVisible"
         },
         {
           "command": "sqliteTableViewer.unlockWithSponsors",
-          "when": "sqliteTableViewer.proEnabled"
+          "when": "sqliteTableViewer.proEnabled && sqliteTableViewer.proVisible"
+        },
+        {
+          "command": "sqliteTableViewer.payWithPayPal",
+          "when": "sqliteTableViewer.proEnabled && sqliteTableViewer.proVisible"
         },
         {
           "command": "sqliteTableViewer.removeLicense",
-          "when": "sqliteTableViewer.proEnabled"
+          "when": "sqliteTableViewer.proEnabled && sqliteTableViewer.proVisible"
         }
       ]
     },
@@ -234,6 +284,17 @@
           "type": "boolean",
           "default": true,
           "description": "While editing, check foreign keys (PRAGMA foreign_keys = ON): a change that breaks one is refused, and Save checks the whole file."
+        },
+        "sqliteTableViewer.showProFeatures": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Show the Zovo Pro tools (the DB tools button, compare, ER diagram, export all tables) and the Zovo license commands. Off hides them unless a license is active. Free features are not affected."
+        },
+        "sqliteTableViewer.compareMaxStatements": {
+          "type": "number",
+          "default": 1000000,
+          "minimum": 1000,
+          "markdownDescription": "Compare databases (Zovo Pro): the sync script stops after this many statements. A script that stops ends with `ROLLBACK`, so it never makes half a change."
         }
       }
     },

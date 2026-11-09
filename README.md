@@ -4,7 +4,7 @@
 <a href="https://marketplace.visualstudio.com/items?itemName=zovo.sqlite-table-viewer"><img src="https://img.shields.io/visual-studio-marketplace/v/zovo.sqlite-table-viewer?label=version" alt="Version"></a>
 <a href="https://github.com/theluckystrike/sqlite-table-viewer/blob/HEAD/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license"></a>
 
-Free, no paywall, no sign-in, works offline. Opening, viewing, editing, Save and CSV import cost nothing, and there is no license banner.
+Free, no paywall, no sign-in, works offline. Opening, viewing, editing, Save and CSV import cost nothing, and there is no license banner. Optional Zovo Pro (USD 19 once, all Zovo extensions) adds database compare with a sync script, ER diagrams and export of every table at once. Everything that is free today stays free.
 
 Click a `.db` or `.sqlite` file and it opens read-only. Click Enable editing to change cells and rows, run INSERT or UPDATE, or import a CSV file. Every change waits in a pending list with its SQL and Undo. Save checks the constraints, makes a backup copy and replaces the file in one step.
 
@@ -76,6 +76,22 @@ People who use SQLite tools in VS Code have reported these problems. The right c
 | Opening a database locked it, so the app that owns it got "attempt to write a readonly database". | [sqlite3-editor issue 60](https://github.com/yy0931/sqlite3-editor/issues/60) | The file is read into memory and closed. Another program can keep writing while it is open, and the view reloads. The test writes to the file from the sqlite3 tool during an edit. |
 | A database was reported damaged after it was opened in an editor while it was in use. | [sqlite3-editor issue 49](https://github.com/yy0931/sqlite3-editor/issues/49) | Read-only until Enable editing. Save refuses a file that changed, a `-wal` with pending transactions and a hot journal, makes a backup, and replaces the file atomically. |
 
+## Free and Zovo Pro
+
+Everything in the sections above is free and stays free: opening, reading, the SQL tab, editing cells and rows, Save with a backup, CSV and TSV import with column transforms, the table tools, and export of the rows in view. There is no trial timer and no license banner, and nothing about Pro shows when a database opens.
+
+Zovo Pro is USD 19 once and unlocks the Pro tools in every Zovo extension. It adds three tools for work across a whole database. Each one can be used 3 times for free on each computer. A try counts only when the tool wrote its files; Escape or an error costs nothing. After that, starting the tool shows one dialog with the ways to unlock: the "$19 one time" tier on GitHub Sponsors, PayPal (you get a license key), or a key you already have.
+
+Start them from the DB tools button (with a small PRO badge) in the editor, the Command Palette, or a right-click on a database file in the Explorer.
+
+| Pro tool | What you get |
+|---|---|
+| Compare with another database | Tables, columns, indexes, views, triggers and rows of two SQLite files, with rows matched by primary key (or rowid). A Markdown report with counts and the first differences of each table, and `a-vs-b-sync.sql`, a script that makes the second database match the first. The script is opened in an editor and never run for you. |
+| ER diagram and schema document | `name-er.svg` (tables, columns, keys and a line for each foreign key), `name-er.mmd` (Mermaid `erDiagram`, renders on GitHub) and `name-schema.md` with every table, column, key, index, trigger and view. |
+| Export all tables | One Excel workbook with a sheet per table (bold, frozen header row), or a folder with one CSV file per table. |
+
+The setting `sqliteTableViewer.showProFeatures` set to `false` hides the button and the Pro commands. Both databases are only read; the tools never write to a database file.
+
 ## Large files
 
 The whole database is loaded into memory. Files up to 512 MB open (setting `sqliteTableViewer.maxFileSizeMB`), and rows are fetched one page at a time, so a table with millions of rows scrolls as fast as a small one. Editing is limited to 256 MB (setting `sqliteTableViewer.editMaxFileSizeMB`), because Save needs a second copy in memory. A larger file stays open read-only and says so. In the real VS Code test a 301 MB database with 1,000,000 rows opened in under 2 seconds and scrolled to its last row.
@@ -101,7 +117,9 @@ The Schema tab shows columns, keys, foreign keys and the CREATE statements. The 
 | `sqliteTableViewer.copyMaxRows` | `100000` | Most rows copied to the clipboard at once |
 | `sqliteTableViewer.exportMaxRows` | `1000000` | Most rows written to one export |
 | `sqliteTableViewer.autoReload` | `true` | Reload when the database or its `-wal` file changes (not while editing) |
-| `sqliteTableViewer.askForRating` | `true` | Ask for a Marketplace rating at most twice, never after an error |
+| `sqliteTableViewer.askForRating` | `true` | Ask for a rating at most twice, never after an error |
+| `sqliteTableViewer.showProFeatures` | `true` | Show the Zovo Pro tools and license commands; `false` hides them unless Pro is unlocked |
+| `sqliteTableViewer.compareMaxStatements` | `1000000` | Compare: the sync script stops (and rolls back) after this many statements |
 
 ## Limits
 
@@ -112,13 +130,13 @@ The Schema tab shows columns, keys, foreign keys and the CREATE statements. The 
 
 ## Privacy
 
-No network requests and no telemetry. The database is read and edited in a worker thread on your computer. Two local tools may run: `lsof` (macOS and Linux) to see whether another program has the file open before editing and saving, and `sqlite3` only when you click "Checkpoint and reload". The webview runs under a strict Content Security Policy with no remote scripts, and every value from the file is written as plain text, never as HTML.
+No network requests and no telemetry. The only exception is a click you make on a Zovo Pro unlock button: GitHub Sponsors asks VS Code for your GitHub sign-in and sends one request to GitHub, and the buy buttons open a page in your browser. The database is read and edited in a worker thread on your computer. Two local tools may run: `lsof` (macOS and Linux) to see whether another program has the file open before editing and saving, and `sqlite3` only when you click "Checkpoint and reload". The webview runs under a strict Content Security Policy with no remote scripts, and every value from the file is written as plain text, never as HTML.
 
 ## Development
 
 ```sh
 npm install
-npm test          # builds with esbuild, then node --test: 115 tests, incl. a 1,000,000-row CSV import and save
+npm test          # builds with esbuild, then node --test, incl. a 1,000,000-row CSV import and save
 npm run package   # writes dist/sqlite-table-viewer-<version>.vsix
 ```
 
@@ -130,13 +148,17 @@ Zovo extensions are free, with no ads and no tracking. They are made by [theluck
 - [PayPal](https://www.paypal.com/paypalme/najzzz)
 - [Follow theluckystrike on GitHub](https://github.com/theluckystrike)
 
+### Need your format supported?
+
+Open a [format request](https://github.com/theluckystrike/sqlite-table-viewer/issues/new?template=format-request.yml) with a sample file, and I reply there whether it can be done. For USD 299 once, through [this GitHub Sponsors tier](https://github.com/sponsors/theluckystrike/sponsorships?tier_id=679995), I add your file format or a missing feature to this extension, with tests, within 7 days.
+
 ## More tools by Zovo
 
 - [XLSX Viewer & CSV Preview for Excel, XLS & Parquet](https://marketplace.visualstudio.com/items?itemName=zovo.table-viewer-vscode) opens CSV, TSV, Excel and Parquet files as a sortable, filterable table.
-- [Spreadsheet Editor for CSV, Excel & XLSX](https://github.com/theluckystrike/spreadsheet-editor-vscode) edits CSV, TSV and Excel files as a spreadsheet, with undo and save.
 - [Large JSON Viewer, JSON Browser & JSON Tree](https://marketplace.visualstudio.com/items?itemName=zovo.zovo-json-tree-viewer) shows large JSON files as a searchable tree, copies JSONPath and turns arrays of objects into a table.
 - [Avro Viewer, Apache Arrow Viewer & Feather Viewer](https://marketplace.visualstudio.com/items?itemName=zovo.arrow-avro-viewer) opens Avro, Arrow and Feather files as a paged table.
 - [JSONL Viewer, Large JSONL Table & NDJSON Viewer](https://marketplace.visualstudio.com/items?itemName=zovo.zovo-jsonl-viewer) opens JSONL and NDJSON files as a table, as records or as a chat view.
+- [GeoJSON Viewer, KML Viewer & GPX Viewer (Map Preview, Shapefile)](https://marketplace.visualstudio.com/items?itemName=zovo.zovo-geo-map-viewer) GeoJSON viewer, KML viewer and GPX viewer with a map preview in VS Code. Also opens shapefiles (SHP, zipped), KMZ, TopoJSON, WKT and CSV with lat/lon: feature table, properties, GPX distance and elevation profile, reprojection from .prj, PNG export. Free, no sign-in, works offline.
 
 See [all Zovo extensions on the Marketplace](https://marketplace.visualstudio.com/publishers/zovo).
 

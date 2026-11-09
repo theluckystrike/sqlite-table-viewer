@@ -180,7 +180,7 @@ const LIVE = [
   [
     "zovo.swagger-openapi-viewer",
     "Swagger Viewer & OpenAPI Viewer (OpenAPI Preview, 3.1, $ref)",
-    "swagger viewer and OpenAPI preview for VS Code. Live Swagger UI or reference layout for OpenAPI 3.1, 3.0 and Swagger 2.0 in YAML or JSON, with external $ref across files, a problem list with line numbers and copyable text. No server, no port, no sign-in, works offline."
+    "swagger editor and OpenAPI editor for VS Code: lint with readable rules and quick fixes, IntelliSense, $ref go to definition and rename, and a live Swagger UI preview that follows the cursor. OpenAPI 3.1, 3.0 and Swagger 2.0 in YAML or JSON, offline. Convert 2.0 to 3.0 to 3.1, bundle split specs. Also a Swagger viewer and OpenAPI viewer. No sign-in."
   ],
   [
     "zovo.xmind-mind-map-viewer",
@@ -247,9 +247,15 @@ const QUEUED = [
   ],
   [
     "zovo.zovo-auto-rename-tag",
-    "Tag Auto Rename & Close Tag Sync (Matching Tag Highlight, JSX, Vue)",
+    "Auto Rename Tag & Close Tag Sync for HTML, JSX, Vue (Matching Tag Highlight)",
     "auto rename tag and auto close tag as you type in HTML, JSX/TSX, Vue, Svelte, PHP, Blade, Twig, XML and Markdown. One undo step for both tags, never pairs <br> or TypeScript generics, highlights the matching tag. Free, no sign-in, works offline.",
     "https://github.com/theluckystrike/tag-rename-close-sync-vscode"
+  ],
+  [
+    "zovo.zovo-docstring-generator",
+    "Docstring Generator & Python Docstring Updater (Google, NumPy, Sphinx, JSDoc)",
+    "free docstring generator for Python: type \"\"\" under a def or class and press Enter. Google, NumPy, Sphinx (reST) and Epytext styles or your own template, filled from the signature: type hints, defaults, *args, **kwargs, positional-only and keyword-only parameters, return type, yield, raise, dataclass fields and __init__ arguments. Updates a python docstring when the signature changes and keeps your text. JSDoc with TypeScript types for JS and TS. No sign-in, works offline.",
+    "https://github.com/theluckystrike/docstring-generator-vscode"
   ],
   [
     "zovo.zovo-folder-diff",
@@ -258,10 +264,22 @@ const QUEUED = [
     "https://github.com/theluckystrike/folder-diff-vscode"
   ],
   [
+    "zovo.zovo-git-commit-graph",
+    "Git Commit Graph & History Log (Branches, Compare, Blame)",
+    "free git commit graph and history log for VS Code: every branch, tag, remote and stash as a graph that opens 200,000 commits in about a second, search across the full history (message, author, hash, file path, changed text), compare any two commits, file and line history, and checkout, merge, rebase, cherry-pick, revert, reset and squash with the exact git command shown first. No sign-in, no network of its own.",
+    "https://github.com/theluckystrike/git-commit-graph-vscode"
+  ],
+  [
     "zovo.zovo-html-css-class-intellisense",
-    "Class Names IntelliSense & CSS Support for HTML Templates (ID Completion)",
+    "HTML CSS Support & CSS Class Names IntelliSense (ID Completion)",
     "free and offline. CSS class names and id completion in HTML, React, Vue, Svelte, Angular, PHP and Blade, from every CSS, SCSS and Less file in your project, <style> blocks, linked style sheets and CSS modules. Go to definition and hover. Light on CPU in big monorepos.",
     "https://github.com/theluckystrike/class-names-intellisense-vscode"
+  ],
+  [
+    "zovo.zovo-js-ts-scratchpad",
+    "JavaScript Playground & TypeScript Scratchpad with Inline Values (Live JS and TS Runner)",
+    "javaScript playground and TypeScript scratchpad for VS Code: the value of each line shows at the end of the line as you type, with console.log output and errors on their own lines. A live JS and TS runner for quick tests and a REPL-style scratch file, with no tsconfig, no setup and no sign-in. Free, works offline.",
+    "https://github.com/theluckystrike/js-ts-scratchpad-vscode"
   ],
   [
     "zovo.zovo-linker-map-viewer",
@@ -282,10 +300,28 @@ const QUEUED = [
     "https://github.com/theluckystrike/markdown-export-vscode"
   ],
   [
+    "zovo.zovo-oracle-sqlserver-client",
+    "Oracle SQL & SQL Server Query Client (MSSQL, T-SQL, PLSQL, Oracle Database Tool)",
+    "free Oracle SQL and SQL Server client for VS Code, Cursor and Windsurf: run T-SQL and PLSQL, GO and / batches, PRINT and DBMS_OUTPUT, browse tables, cancel queries, streamed CSV export. Azure SQL, Windows (NTLM) login, tnsnames.ora, wallets. Pure JS drivers, fast start, an alternative to heavy desktop SQL tools. No sign-in, no telemetry.",
+    "https://github.com/theluckystrike/oracle-sqlserver-client-vscode"
+  ],
+  [
     "zovo.zovo-parquet-viewer",
-    "Parquet Grid Viewer: Large File Explorer, Schema & Nested Data (Zovo)",
+    "Parquet Viewer & Parquet Explorer for Large Parquet File, Schema & Nested Data",
     "free, no Python, no sign-in, works offline. Opens Parquet files as a fast grid: only the footer and the rows on screen are read, so large files open at once. Exact DECIMAL and INT64 values, INT96 timestamps, nested LIST, MAP and STRUCT, every codec (Snappy, Gzip, Zstd, Brotli, LZ4). Filter, sort, search, copy as CSV, JSON or Markdown, export to CSV.",
     "https://github.com/theluckystrike/parquet-viewer-vscode"
+  ],
+  [
+    "zovo.zovo-run-cpp",
+    "Run C++ and C Code: One-Click Compile with GCC, G++, Clang (CPP Runner, Input Panel)",
+    "run C++ and C code with one click: compile and run the current file with gcc, g++, clang or clang++. Interactive input in the terminal, an Input panel with saved test cases and diffs, errors in Problems, Stop for endless loops, per-file flags. Free, no sign-in, works offline.",
+    "https://github.com/theluckystrike/run-cpp-vscode"
+  ],
+  [
+    "zovo.zovo-s3-explorer",
+    "S3 Explorer & S3 Client, Bucket Browser for AWS, MinIO and Cloudflare R2",
+    "free S3 client inside VS Code: browse buckets with millions of keys, open objects read-only, upload large files with resume, download, copy, move, delete (always asks first), versions, tags, presigned URLs and folder sync with a dry run. Works with AWS profiles (SSO too), MinIO, Cloudflare R2, Backblaze B2, Wasabi and DigitalOcean Spaces. No sign-in, no telemetry.",
+    "https://github.com/theluckystrike/s3-explorer-vscode"
   ],
   [
     "zovo.zovo-shell-formatter",
@@ -307,7 +343,7 @@ const QUEUED = [
   ],
   [
     "zovo.zovo-sql-formatter",
-    "SQL Safe Formatter & Format on Save: PostgreSQL, MySQL, T-SQL, PL/SQL (Zovo)",
+    "SQL Formatter & Format SQL on Save: PostgreSQL, MySQL, T-SQL, PL/SQL (Zovo)",
     "free and offline SQL formatter that never changes your code: $$ bodies, DELIMITER $$, N'...' strings, [names with spaces] and comments stay exactly as written. Format SQL on save or for a selection in 20 dialects, with procedures indented by block and SQL inside strings.",
     "https://github.com/theluckystrike/sql-formatter-vscode"
   ],
@@ -386,7 +422,7 @@ const PAIRS = [
 
 // Ids of the 3 to 5 extensions most related to this one (shared file types and users), best first.
 // Picked by monetize.py. The More free viewers list shows these first.
-const RELATED = ["zovo.table-viewer-vscode", "zovo.zovo-spreadsheet-editor", "zovo.zovo-json-tree-viewer", "zovo.arrow-avro-viewer", "zovo.zovo-jsonl-viewer"];
+const RELATED = ["zovo.table-viewer-vscode", "zovo.zovo-json-tree-viewer", "zovo.arrow-avro-viewer", "zovo.zovo-jsonl-viewer", "zovo.zovo-geo-map-viewer"];
 
 const PUBLISHER_URL = 'https://marketplace.visualstudio.com/publishers/zovo';
 
@@ -411,10 +447,26 @@ function marketplaceUrl(id) {
   return `https://marketplace.visualstudio.com/items?itemName=${encodeURIComponent(id)}`;
 }
 
-/** The review tab of a listing. '' when the id is empty. */
-function reviewUrl(id) {
+// The store this editor installs from (same rule as rate.js storeFor): VS Code uses the Marketplace; Cursor,
+// Windsurf, VSCodium and other VS Code-based editors use Open VSX. registerSupport() sets it from vscode.env.
+let STORE = 'marketplace';
+function storeFor(env) {
+  const scheme = String((env && env.uriScheme) || '').toLowerCase();
+  const app = String((env && env.appName) || '').toLowerCase();
+  if (!scheme && !app) return 'marketplace';
+  if (/^vscode(-insiders|-exploration)?$/.test(scheme) || app.startsWith('visual studio code')) return 'marketplace';
+  return 'openvsx';
+}
+
+/** The review tab of a listing in the store of this editor (or `store`). '' when the id is empty. */
+function reviewUrl(id, store) {
   const x = String(id || '');
-  return x ? `${marketplaceUrl(x)}&ssr=false#review-details` : '';
+  if (!x) return '';
+  if ((store || STORE) === 'openvsx') {
+    const dot = x.indexOf('.');
+    return `https://open-vsx.org/extension/${encodeURIComponent(dot > 0 ? x.slice(0, dot) : x)}/${encodeURIComponent(dot > 0 ? x.slice(dot + 1) : '')}/reviews`;
+  }
+  return `${marketplaceUrl(x)}&ssr=false#review-details`;
 }
 
 /** How closely two products are used together. 0 when they are not a pair. */
@@ -515,7 +567,7 @@ function footerHtml(prefix, show, extraClass) {
   const sep = '<span class="zovo-sep" aria-hidden="true">·</span>';
   // Order: Rate · More free viewers · Sponsor · PayPal (only when set) · Hide. Rate comes first: ratings help people find the extension.
   return `<div class="${cls}" id="zovo-support">`
-    + (reviewUrl(SELF_ID) ? `<a href="${reviewUrl(SELF_ID)}" title="Rate or review this extension on the Marketplace">Rate</a>` + sep : '')
+    + (reviewUrl(SELF_ID) ? `<a href="${reviewUrl(SELF_ID)}" title="Rate or review this extension on ${STORE === 'openvsx' ? 'Open VSX' : 'the Marketplace'}">Rate</a>` + sep : '')
     + `<a href="command:${c.more}" title="Other free extensions by Zovo">More free viewers</a>` + sep
     + `<a href="command:${c.sponsor}" title="Open the GitHub Sponsors page">Sponsor</a>` + sep
     + (paypalUrl() ? `<a href="${paypalUrl()}" title="Support the developer on PayPal">PayPal</a>` + sep : '')
@@ -545,6 +597,7 @@ function showLinks(vscode, prefix) {
  */
 function registerSupport(opts) {
   const { vscode, context, prefix, selfId } = opts;
+  try { STORE = storeFor(vscode.env); } catch { STORE = 'marketplace'; }
   const c = commandIds(prefix);
   const open = (url) => vscode.env.openExternal(vscode.Uri.parse(url));
 
@@ -587,7 +640,7 @@ function registerSupport(opts) {
 
 module.exports = {
   FUNDING, GITHUB_PROFILE, SELF_ID, LIVE, QUEUED, PAIRS, RELATED, PUBLISHER_URL, SETTING, FOOTER_CSS,
-  fundingLinks, sponsorUrl, paypalUrl, marketplaceUrl, reviewUrl, pairWeight, otherProducts, relatedProducts, pickItems,
+  fundingLinks, sponsorUrl, paypalUrl, marketplaceUrl, reviewUrl, storeFor, pairWeight, otherProducts, relatedProducts, pickItems,
   commandIds, commandUris,
   footerHtml, footerMarkdown, showLinks, registerSupport,
 };

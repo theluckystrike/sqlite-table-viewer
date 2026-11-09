@@ -11,5 +11,6 @@ fs.copyFileSync(path.join(root, 'node_modules/sql.js/dist/sql-wasm.wasm'), path.
 Promise.all([
   esbuild.build({ ...common, entryPoints: ['src/extension.js'], outfile: 'dist/extension.js', platform: 'node', format: 'cjs', target: 'node18', external: ['vscode'] }),
   esbuild.build({ ...common, entryPoints: ['src/worker.js'], outfile: 'dist/worker.js', platform: 'node', format: 'cjs', target: 'node18' }),
+  esbuild.build({ ...common, entryPoints: ['src/proWorker.js'], outfile: 'dist/proworker.js', platform: 'node', format: 'cjs', target: 'node18' }),
   esbuild.build({ ...common, entryPoints: ['src/webview/main.js'], outfile: 'dist/webview.js', platform: 'browser', format: 'iife', target: 'chrome110' }),
 ]).catch(() => process.exit(1));

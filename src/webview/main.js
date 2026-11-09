@@ -65,7 +65,15 @@ const btnReload = el('button', 'btn', '↻ Reload');
 btnReload.title = 'Read the file and its -wal again. The table, sort, filters and scroll position stay.';
 const btnLive = el('button', 'btn', 'Live');
 btnLive.title = 'Live: reload by itself when the file or its -wal changes (setting sqliteTableViewer.autoReload)';
-toolbar.append(title, roBadge, stats, spacer, tabs, search, btnReload, btnLive, copyAs, btnExport);
+// Zovo Pro tools (compare, ER diagram, export all tables). Hidden until the host says so (setting
+// sqliteTableViewer.showProFeatures); the PRO badge goes away when Pro is unlocked.
+const btnPro = el('button', 'btn protools', 'DB tools');
+btnPro.title = 'Compare with another database, ER diagram and schema document, export all tables (Zovo Pro, 3 free tries each)';
+btnPro.hidden = true;
+const proBadge = el('span', 'probadge', 'PRO');
+btnPro.append(proBadge);
+btnPro.addEventListener('click', () => vscode.postMessage({ type: 'proTools' }));
+toolbar.append(title, roBadge, stats, spacer, tabs, search, btnReload, btnLive, copyAs, btnExport, btnPro);
 btnReload.addEventListener('click', () => { flash('Reloading…', true); vscode.postMessage({ type: 'reload' }); });
 btnLive.addEventListener('click', () => vscode.postMessage({ type: 'setAutoReload', on: !S.autoReload }));
 function renderLive() {
@@ -670,6 +678,11 @@ window.addEventListener('message', ev => {
       title.textContent = msg.fileName;
       S.history = Array.isArray(msg.history) ? msg.history : [];
       renderHistory();
+      break;
+    case 'pro':
+      btnPro.hidden = !msg.visible || msg.local === false;
+      proBadge.hidden = !!msg.licensed;
+      btnPro.title = msg.licensed ? 'Compare with another database, ER diagram and schema document, export all tables (Zovo Pro)' : 'Compare with another database, ER diagram and schema document, export all tables (Zovo Pro, 3 free tries each)';
       break;
     case 'history':
       S.history = msg.history;

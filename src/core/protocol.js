@@ -19,7 +19,7 @@ const isStr = (v, max) => typeof v === 'string' && v.length <= max;
 function validateWebviewMessage(m) {
   if (!m || typeof m !== 'object' || typeof m.type !== 'string') return null;
   switch (m.type) {
-    case 'ready': case 'openSettings': case 'objects': case 'reload':
+    case 'ready': case 'openSettings': case 'objects': case 'reload': case 'proTools':
       return { type: m.type };
     case 'setAutoReload':
       return typeof m.on === 'boolean' ? { type: 'setAutoReload', on: m.on } : null;

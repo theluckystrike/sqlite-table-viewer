@@ -346,5 +346,5 @@ function formatRows(columns, rows, format, opts = {}) {
 module.exports = {
   HEADER, sniff, notSqliteMessage, friendlyOpenError, prepareBytes, quoteIdent, quoteValue, toHex,
   maskSql, trimStatement, checkReadOnly, filterClause, buildWhere, likeEscape, affinity, blobKind,
-  encodeCell, vectorStats, hexDump, describeCell, formatRows, READ_PRAGMAS, GRID_TEXT,
+  encodeCell, vectorStats, hexDump, describeCell, formatRows, csvField, READ_PRAGMAS, GRID_TEXT,
 };
