@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.3.0 (2026-11-09)
+
+- Support links: PayPal next to GitHub Sponsors. "More free viewers" lists the XLSX viewer and the Spreadsheet Editor first.
+- Editing. A database still opens read-only. Click "Enable editing" to change it. Before that it tells you when another program has the file open, when the `-wal` file holds transactions that are not in the main file yet, or when a `-journal` shows a write in progress.
+- Change cells in place (double-click, Enter, F2 or just type). Values are stored by the column type: INTEGER, REAL, TEXT, NULL, or a BLOB from hex or from a file. Delete sets a cell to NULL.
+- Insert, duplicate and delete rows. INSERT, UPDATE, DELETE, CREATE and ALTER run in the SQL box.
+- Every change waits in a pending list that shows the SQL, with Undo and Discard. A CHECK, NOT NULL, UNIQUE or foreign key error refuses only that change.
+- Save (Ctrl+S or Cmd+S) checks foreign keys and `quick_check`, makes a backup copy (`name.db.YYYYMMDD-HHMMSS.bak` next to the file, or in `~/.zovo-sqlite-backups`), writes the new file to a temp file, flushes it to disk and swaps it in with a rename. A file that changed on disk since you opened it is never overwritten, and your changes stay.
+- "Checkpoint and reload" for a database whose `-wal` file has transactions in it (runs `PRAGMA wal_checkpoint(TRUNCATE)` with the sqlite3 tool).
+- CSV and TSV import into a new or an existing table: preview of the first 200 rows, delimiter, encoding (UTF-8, Windows-1252, UTF-16), header row, column names, types and mapping. The file is read in 1 MB pieces with a progress bar and Cancel. 1,000,000 rows import and save in about 3 seconds in the tests.
+- "Import CSV into a new SQLite database" on any `.csv` file in the Explorer.
+- Export to SQL INSERT statements, next to CSV and JSON.
+- Table tools: add, rename and drop columns, rename a table, and find and replace in a column. All staged with Undo.
+- Grid rows of a table are now always in row key order when no sort is set, so a row number points at the same row for every query.
+- New settings: `sqliteTableViewer.editMaxFileSizeMB` (256), `sqliteTableViewer.backupLocation`, `sqliteTableViewer.enforceForeignKeys`. Larger files still open read-only.
+- The Marketplace name is now "SQLite Editor & Viewer, SQLite3 Database Browser (Edit Cells, CSV Import)". The extension ID, settings and commands stay the same.
+
 ## 0.2.3 (2026-11-08)
 
 - The Marketplace name is now "SQLite Viewer & SQLite3 DB File Browser, Database Explorer" (was "SQLite DB Viewer & SQLite Viewer, Database Viewer (Read-Only)"), so more searches find it. The extension ID, settings and commands stay the same.

@@ -8,12 +8,16 @@ const { validateWebviewMessage } = require('./core/protocol');
 const { sniff } = require('./core/sqlutil');
 const { createRatingPrompt } = require('./rate');
 const { registerSupport, commandUris, showLinks } = require('./support');
+const { createEditHost, emptyDatabase } = require('./editHost');
+const { createPro } = require('./pro');
+
+let pro = { enabled: false, isPro: () => true, require: async () => true };
 
 let rating = { success() {}, failure() {} };
 
 const VIEW_TYPE = 'sqliteTableViewer.database';
 const KNOWN_EXT = /\.(db|sqlite|sqlite3|db3|s3db|sl3|vscdb|gpkg)$/i;
-const STATE_MESSAGES = new Set(['meta', 'view', 'rows', 'objects', 'reloaded', 'reloadFailed']);
+const STATE_MESSAGES = new Set(['meta', 'view', 'rows', 'objects', 'reloaded', 'reloadFailed', 'pending', 'importProgress']);
 const HISTORY_KEY = 'sqliteTableViewer.history';
 const HISTORY_MAX = 20;
 
@@ -30,6 +34,7 @@ function settings() {
 const EXPORT_CHOICES = [
   { id: 'csv', label: 'CSV', description: 'comma-separated, with a header row' },
   { id: 'json', label: 'JSON', description: 'one array of objects' },
+  { id: 'sql', label: 'SQL INSERT statements', description: 'one INSERT per row, for another SQLite or SQL database' },
 ];
 
 /** First 16 bytes of a file, or null when it cannot be read. */
@@ -46,7 +51,7 @@ async function readHead(uri) {
 }
 
 class DatabaseEditorProvider {
-  constructor(context) { this.context = context; }
+  constructor(context) { this.context = context; this.pendingImports = new Map(); }
 
   openCustomDocument(uri) { return { uri, dispose() {} }; }
 
@@ -80,6 +85,10 @@ class DatabaseEditorProvider {
       if (webviewReady) { panel.webview.postMessage(msg); return; }
       if (!STATE_MESSAGES.has(msg.type) && !(msg.type === 'error' && !msg.transient)) queue.push(msg);
     };
+    const editHost = createEditHost({
+      vscode, uri, name, pro, toWebview: m => toWebview(m), getWorker: () => worker,
+      reload: r => reload(r),
+    });
     const failHost = message => { fatal = { type: 'error', message }; rating.failure(); toWebview(fatal); };
     const history = () => ctx.globalState.get(HISTORY_KEY, []);
 
@@ -87,18 +96,24 @@ class DatabaseEditorProvider {
       const limit = opts.maxFileSizeMB * 1024 * 1024;
       const stat = await vscode.workspace.fs.stat(uri);
       if (stat.size > limit) {
-        throw new Error(`This database is ${(stat.size / 1048576).toFixed(0)} MB. SQLite Table Viewer loads the whole file into memory, and the limit is ${opts.maxFileSizeMB} MB (setting sqliteTableViewer.maxFileSizeMB). Open a smaller copy, or raise the limit if this machine has the memory.`);
+        throw new Error(`This database is ${(stat.size / 1048576).toFixed(0)} MB. SQLite Editor loads the whole file into memory, and the limit is ${opts.maxFileSizeMB} MB (setting sqliteTableViewer.maxFileSizeMB). Open a smaller copy, or raise the limit if this machine has the memory.`);
       }
       const source = await readSource();
       worker = new Worker(path.join(ctx.extensionPath, 'dist', 'worker.js'), { resourceLimits: { maxOldGenerationSizeMb: 4096 } });
       worker.on('message', msg => {
         if (!msg) return;
         if (msg.type === 'copyResult') return onCopy(msg);
+        if (editHost.onWorker(msg)) return;
         if (msg.type === 'exportResult') return onExport(msg);
         if (msg.type === 'error' && !msg.transient) { fatal = msg; rating.failure(); }
         if (msg.type === 'opened' || msg.type === 'reloaded') lastWal = msg.wal || null;
         if (msg.type === 'reloaded' || msg.type === 'reloadFailed') reloadDone(msg);
-        if (msg.type === 'meta' && !counted && !fatal) { counted = true; rating.success(); }
+        if (msg.type === 'meta' && !counted && !fatal) { counted = true; rating.success(uri); }
+        if (msg.type === 'objects' && this.pendingImports.has(uri.toString())) {
+          const csv = this.pendingImports.get(uri.toString());
+          this.pendingImports.delete(uri.toString());
+          editHost.importFrom(csv);
+        }
         toWebview(msg);
       });
       worker.on('error', e => failHost(`The reader stopped: ${e.message}`));
@@ -124,6 +139,7 @@ class DatabaseEditorProvider {
     let retried = false;
     const reload = async reason => {
       if (!worker || fatal || disposed) return;
+      if (editHost.editing || editHost.importing) { toWebview({ type: 'reloadFailed', message: 'Editing is on. Save or discard your changes, then reload.', editing: true }); return; }
       if (reloading) { reloadAgain = reason; return; }
       reloading = true;
       try {
@@ -151,7 +167,9 @@ class DatabaseEditorProvider {
       if (disposed) return;
       clearTimeout(changeTimer);
       changeTimer = setTimeout(() => {
-        if (settings().autoReload) reload('file');
+        // While editing, a reload would drop the staged changes. Show the notice; Save refuses a changed file anyway.
+        if (editHost.editing || editHost.importing) toWebview({ type: 'fileChanged', editing: true });
+        else if (settings().autoReload) reload('file');
         else toWebview({ type: 'fileChanged' });
       }, 300);
     };
@@ -161,7 +179,11 @@ class DatabaseEditorProvider {
         // A stat of the database and its -wal once a second. VS Code's file watcher and fs.watch both
         // missed writes from another process on macOS (VS Code 1.142, a Python WAL writer), so poll.
         for (const f of [uri.fsPath, uri.fsPath + '-wal']) {
-          const onStat = (cur, prev) => { if (cur.mtimeMs !== prev.mtimeMs || cur.size !== prev.size) onFileChange(); };
+          const onStat = (cur, prev) => {
+          if (cur.mtimeMs === prev.mtimeMs && cur.size === prev.size) return;
+          if (f === uri.fsPath && editHost.isOwnWrite(cur)) return; // our own Save
+          onFileChange();
+        };
           fs.watchFile(f, { interval: 1000, persistent: false }, onStat);
           watchers.push({ dispose: () => fs.unwatchFile(f, onStat) });
         }
@@ -225,7 +247,7 @@ class DatabaseEditorProvider {
       if (!msg) return;
       if (msg.type === 'ready') {
         webviewReady = true;
-        panel.webview.postMessage({ type: 'init', fileName: name, history: history() });
+        panel.webview.postMessage({ type: 'init', fileName: name, history: history(), canEdit: uri.scheme === 'file', proEnabled: pro.enabled, isPro: pro.isPro() });
         if (warnings.length) panel.webview.postMessage({ type: 'warnings', warnings });
         panel.webview.postMessage({ type: 'settings', autoReload: settings().autoReload });
         if (lastWal) panel.webview.postMessage({ type: 'wal', wal: lastWal });
@@ -243,6 +265,7 @@ class DatabaseEditorProvider {
         return;
       }
       if (msg.type === 'export') { startExport(msg.format); return; }
+      if (editHost.handle(msg)) return;
       if (msg.type === 'runSql') {
         const h = [msg.sql.trim(), ...history().filter(s => s !== msg.sql.trim())].slice(0, HISTORY_MAX);
         await ctx.globalState.update(HISTORY_KEY, h);
@@ -252,6 +275,9 @@ class DatabaseEditorProvider {
     });
 
     panel.onDidDispose(() => {
+      if (editHost.pending > 0) {
+        vscode.window.showWarningMessage(`${name} was closed with ${editHost.pending} unsaved change${editHost.pending === 1 ? '' : 's'}. They were dropped, and the file was not changed.`);
+      }
       disposed = true;
       clearTimeout(changeTimer);
       watchers.forEach(w => w.dispose());
@@ -263,19 +289,42 @@ class DatabaseEditorProvider {
 }
 
 function activate(context) {
-  rating = createRatingPrompt({ vscode, context, extensionId: 'zovo.sqlite-table-viewer', section: 'sqliteTableViewer', name: 'SQLite DB Viewer' });
+  pro = createPro({ vscode, context });
+  rating = createRatingPrompt({ vscode, context, extensionId: 'zovo.sqlite-table-viewer', section: 'sqliteTableViewer', name: 'SQLite Editor' });
   registerSupport({ vscode, context, prefix: 'sqliteTableViewer', selfId: 'zovo.sqlite-table-viewer' });
   const provider = new DatabaseEditorProvider(context);
   context.subscriptions.push(
     vscode.window.registerCustomEditorProvider(VIEW_TYPE, provider, { webviewOptions: { retainContextWhenHidden: false }, supportsMultipleEditorsPerDocument: true }),
     vscode.commands.registerCommand('sqliteTableViewer.open', async uri => {
       const target = uri instanceof vscode.Uri ? uri : vscode.window.activeTextEditor && vscode.window.activeTextEditor.document.uri;
-      if (!target) { vscode.window.showInformationMessage('Right-click a file in the Explorer and pick "Open in SQLite Table Viewer".'); return; }
+      if (!target) { vscode.window.showInformationMessage('Right-click a file in the Explorer and pick "Open in SQLite Editor".'); return; }
       const head = await readHead(target);
       if (!head || sniff(head) === 'other') {
         vscode.window.showWarningMessage(`${path.posix.basename(target.path)} does not start with the "SQLite format 3" header, so it is not a SQLite database.`);
         return;
       }
+      await vscode.commands.executeCommand('vscode.openWith', target, VIEW_TYPE);
+    }),
+    vscode.commands.registerCommand('sqliteTableViewer.csvToNewDatabase', async arg => {
+      let csv = arg instanceof vscode.Uri ? arg : null;
+      if (!csv) {
+        const picked = await vscode.window.showOpenDialog({ title: 'Pick a CSV or TSV file to import into a new SQLite database', openLabel: 'Pick CSV', canSelectMany: false, filters: { 'CSV and TSV': ['csv', 'tsv', 'tab', 'txt', 'psv'], 'All files': ['*'] } });
+        csv = picked && picked[0];
+      }
+      if (!csv) return;
+      if (csv.scheme !== 'file') { vscode.window.showWarningMessage('Pick a file on this computer.'); return; }
+      const target = await vscode.window.showSaveDialog({
+        title: 'Name the new SQLite database', saveLabel: 'Create database',
+        defaultUri: vscode.Uri.file(csv.fsPath.replace(/\.[^.\\/]+$/, '') + '.db'), filters: { 'SQLite database': ['db', 'sqlite', 'sqlite3'] },
+      });
+      if (!target) return;
+      if (target.scheme !== 'file') { vscode.window.showWarningMessage('Pick a folder on this computer.'); return; }
+      if (fs.existsSync(target.fsPath)) {
+        vscode.window.showWarningMessage(`${path.basename(target.fsPath)} already exists. Open it and use Import CSV to add a table, or pick a new name.`);
+        return;
+      }
+      fs.writeFileSync(target.fsPath, emptyDatabase(), { flag: 'wx' });
+      provider.pendingImports.set(target.toString(), csv.fsPath);
       await vscode.commands.executeCommand('vscode.openWith', target, VIEW_TYPE);
     }),
     vscode.commands.registerCommand('sqliteTableViewer.openWalkthrough', () => vscode.commands.executeCommand('workbench.action.openWalkthrough', 'zovo.sqlite-table-viewer#sqliteTableViewer.start', false)),
@@ -292,7 +341,7 @@ function activate(context) {
       offered.add(key);
       const head = await readHead(input.uri);
       if (!head || sniff(head) !== 'sqlite') continue;
-      const pick = await vscode.window.showInformationMessage(`${path.posix.basename(input.uri.path)} is a SQLite database. Open it in SQLite Table Viewer?`, 'Open');
+      const pick = await vscode.window.showInformationMessage(`${path.posix.basename(input.uri.path)} is a SQLite database. Open it in SQLite Editor?`, 'Open');
       if (pick === 'Open') await vscode.commands.executeCommand('vscode.openWith', input.uri, VIEW_TYPE);
     }
   };

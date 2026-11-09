@@ -1,7 +1,8 @@
 'use strict';
 // One open database. Runs in a worker thread in the extension host. Takes webview messages that
 // protocol.js has already checked, and returns the messages to send back. sql.js keeps the
-// database in memory; nothing here writes to the file.
+// database in memory. Nothing here writes to the file: editing.js stages changes, and writeback.js
+// writes them only when the user clicks Save.
 
 const U = require('./sqlutil');
 const { applyWal } = require('./wal');
@@ -114,6 +115,7 @@ class Session {
     const isTable = this.objects.tables.includes(obj);
     let declared = [];
     try { declared = this.all(`PRAGMA table_xinfo(${U.quoteIdent(name)})`).rows.filter(r => Number(r[6] || 0) === 0 || Number(r[6]) === 2 || Number(r[6]) === 3); } catch { declared = []; }
+    const info = new Map(declared.map(r => [String(r[1]), { notnull: Number(r[3]) === 1, dflt: r[4] === null ? null : String(r[4]), pkn: Number(r[5]), generated: Number(r[6] || 0) >= 2 }]));
     const from = U.quoteIdent(name);
     let columns;
     try { columns = this.all(`SELECT * FROM ${from} LIMIT 0`).columns; } catch (e) {
@@ -122,9 +124,24 @@ class Session {
     const types = new Map(declared.map(r => [String(r[1]), String(r[2] || '')]));
     const pk = new Set(declared.filter(r => Number(r[5]) > 0).map(r => String(r[1])));
     const useRowid = isTable && !obj.withoutRowid && !obj.virtual && !columns.some(c => /^(rowid|_rowid_|oid)$/i.test(c));
+    // The row key for edits: a rowid name that no column hides, or the primary key of a WITHOUT ROWID table.
+    let key = null;
+    if (isTable && !obj.virtual && !obj.system) {
+      const alias = obj.withoutRowid ? null : ['_rowid_', 'rowid', 'oid'].find(a => !columns.some(c => c.toLowerCase() === a));
+      if (alias) key = [alias];
+      else if (pk.size) key = declared.filter(r => Number(r[5]) > 0).sort((a, b) => Number(a[5]) - Number(b[5])).map(r => U.quoteIdent(String(r[1])));
+    }
+    const pkCount = pk.size;
     this.source = {
-      kind: 'table', name, from, isTable, rowid: useRowid ? '_rowid_' : null,
-      columns: columns.map(c => ({ name: c, declared: types.get(c) || '', type: U.affinity(types.get(c) || ''), pk: pk.has(c) })),
+      kind: 'table', name, from, isTable, rowid: useRowid ? '_rowid_' : null, key,
+      columns: columns.map(c => {
+        const i = info.get(c) || {};
+        const declaredType = types.get(c) || '';
+        return {
+          name: c, declared: declaredType, type: U.affinity(declaredType), pk: pk.has(c), notnull: !!i.notnull, dflt: i.dflt === undefined ? null : i.dflt,
+          generated: !!i.generated, rowidAlias: !obj.withoutRowid && pkCount === 1 && pk.has(c) && declaredType.toUpperCase() === 'INTEGER',
+        };
+      }),
       sort: null, filters: { global: '', columns: {} }, canFilter: true,
     };
     return this.refresh(true);
@@ -133,6 +150,7 @@ class Session {
   /** Run a statement from the SQL box. */
   runSql(sql) {
     const check = U.checkReadOnly(sql);
+    if (!check.ok && this.edit && this.runWriteSql) return this.runWriteSql(sql, check);
     if (!check.ok) return [{ type: 'sqlError', message: check.message }];
     const t0 = now();
     try {
@@ -169,14 +187,17 @@ class Session {
 
   orderSql() {
     const s = this.source;
-    if (!s.sort) return s.rowid && s.kind === 'table' ? '' : '';
+    // Tables always end the ORDER BY with their row key. Without it SQLite may walk a covering index instead of the
+    // table, and two queries for the same row number (the grid and an edit) could see different rows.
+    const key = s.key ? s.key.join(', ') : s.rowid;
+    if (!s.sort) return key ? ` ORDER BY ${key}` : '';
     const c = s.columns[s.sort.col];
-    if (!c) return '';
+    if (!c) return key ? ` ORDER BY ${key}` : '';
     const dir = s.sort.dir === 'desc' ? 'DESC' : 'ASC';
-    return ` ORDER BY ${U.quoteIdent(c.name)} ${dir} NULLS LAST` + (s.rowid ? `, ${s.rowid}` : '');
+    return ` ORDER BY ${U.quoteIdent(c.name)} ${dir} NULLS LAST` + (key ? `, ${key}` : '');
   }
 
-  refresh(isNew) {
+  refresh(isNew, keepSel) {
     const s = this.source;
     const t0 = now();
     this.version++;
@@ -189,7 +210,7 @@ class Session {
         : Number(this.one(`SELECT COUNT(*) FROM (SELECT 1 FROM ${s.from}${w.sql} LIMIT ${this.opts.rowCountCap || ROW_COUNT_CAP})`, w.params));
     }
     const ms = now() - t0;
-    if (!isNew) return [{ type: 'view', version: this.version, viewCount: this.viewCount, sort: s.sort, ms }];
+    if (!isNew) return [{ type: 'view', version: this.version, viewCount: this.viewCount, sort: s.sort, ms, keepSel: !!keepSel }];
     return [this.metaMessage(ms)];
   }
 
@@ -198,9 +219,9 @@ class Session {
     return {
       type: 'meta', version: this.version,
       source: { kind: s.kind, name: s.name || null, sql: s.sql || null },
-      columns: s.columns.map(c => ({ name: c.name, type: c.type, declared: c.declared, pk: c.pk })),
+      columns: s.columns.map(c => ({ name: c.name, type: c.type, declared: c.declared, pk: c.pk, generated: !!c.generated })),
       viewCount: this.viewCount, sort: s.sort, filters: s.filters, canFilter: s.canFilter, ms: ms || 0,
-      listMore: !!s.listMore,
+      listMore: !!s.listMore, editable: this.editableReason ? this.editableReason() : null,
     };
   }
 
@@ -307,7 +328,7 @@ class Session {
     if (!this.source) return [];
     const max = this.opts.exportMaxRows || 1000000;
     const d = this.selection({ r0: 0, r1: this.viewCount - 1, c0: 0, c1: this.source.columns.length - 1 }, max);
-    const text = U.formatRows(d.columns, d.rows, format, { table: this.source.kind === 'table' ? this.source.name : 'query_result' });
+    const text = U.formatRows(d.columns, d.rows, format === 'sql' ? 'insert' : format, { table: this.source.kind === 'table' ? this.source.name : 'query_result' }) + (format === 'sql' ? '\n' : '');
     return [{ type: 'exportResult', ok: true, format, text, rows: d.rows.length, truncated: d.truncated, bytes: Buffer.byteLength(text) }];
   }
 
@@ -354,8 +375,8 @@ class Session {
         case 'schema': return this.schema(msg.name);
         case 'copy': return this.copy(msg.format, msg.sel);
         case 'export': return this.exportText(msg.format);
-        case 'resync': return this.source ? [this.objectsMessage(), this.metaMessage(0)] : [this.objectsMessage()];
-        default: return [];
+        case 'resync': return [...(this.source ? [this.objectsMessage(), this.metaMessage(0)] : [this.objectsMessage()]), ...(this.pendingMessage ? [this.pendingMessage()] : [])];
+        default: return this.handleEdit ? this.handleEdit(msg) : [];
       }
     } catch (e) {
       if (msg.type === 'export') return [{ type: 'exportResult', ok: false, error: U.friendlyOpenError(e) }];
@@ -382,5 +403,7 @@ function openSession(SQL, bytes, opts = {}) {
     throw new Error(U.friendlyOpenError(e));
   }
 }
+
+require('./editing').installEditing(Session);
 
 module.exports = { Session, openSession, PAGE_MAX, LIST_MAX };

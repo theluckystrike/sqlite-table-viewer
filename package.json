@@ -1,8 +1,8 @@
 {
   "name": "sqlite-table-viewer",
-  "displayName": "SQLite Viewer & SQLite3 DB File Browser, Database Explorer",
-  "description": "Free and read-only. No paywall, ads or sign-in. SQLite DB viewer and SQLite viewer for .db, .sqlite and .sqlite3 files: shows rows still in the -wal file and reloads live when the app writes. Tables, schema, SELECT queries, JSON and BLOB cells, CSV export. Offline, no license banner.",
-  "version": "0.2.3",
+  "displayName": "SQLite Editor & Viewer, SQLite3 Database Browser (Edit Cells, CSV Import)",
+  "description": "Free, no paywall, no sign-in, works offline. Opens .db and .sqlite files read-only; click Enable editing to change cells and rows, run INSERT or UPDATE, and import a 1M-row CSV. Every change is staged with Undo, and Save makes a backup and writes atomically. Reads the -wal file, live reload, JSON and BLOB cells, export to CSV, JSON or SQL.",
+  "version": "0.3.0",
   "publisher": "zovo",
   "license": "MIT",
   "icon": "icon.png",
@@ -20,6 +20,15 @@
     "Other"
   ],
   "keywords": [
+    "sqlite editor",
+    "sqlite edit",
+    "database editor",
+    "db browser",
+    "csv to sqlite",
+    "csv to sql",
+    "csv import",
+    "edit sqlite",
+    "sqlite3 editor",
     "sqlite viewer",
     "db viewer",
     "database viewer",
@@ -36,20 +45,11 @@
     "query",
     "table",
     "schema",
-    "read only",
     "wal",
     "sqlite wal",
     "live reload",
     "db3",
-    "vscdb",
-    "geopackage",
-    "gpkg",
-    "export csv",
-    "blob",
-    "embeddings",
-    "offline",
-    "table viewer",
-    "data browser"
+    "vscdb"
   ],
   "main": "./dist/extension.js",
   "activationEvents": [
@@ -65,7 +65,7 @@
     "customEditors": [
       {
         "viewType": "sqliteTableViewer.database",
-        "displayName": "SQLite Table Viewer",
+        "displayName": "SQLite Editor",
         "selector": [
           {
             "filenamePattern": "*.db"
@@ -98,24 +98,49 @@
     "commands": [
       {
         "command": "sqliteTableViewer.open",
-        "title": "Open in SQLite Table Viewer",
-        "category": "SQLite Table Viewer",
+        "title": "Open in SQLite Editor",
+        "category": "SQLite Editor",
         "icon": "$(database)"
+      },
+      {
+        "command": "sqliteTableViewer.csvToNewDatabase",
+        "title": "Import CSV into a new SQLite database…",
+        "category": "SQLite Editor"
       },
       {
         "command": "sqliteTableViewer.openWalkthrough",
         "title": "Get Started",
-        "category": "SQLite Table Viewer"
+        "category": "SQLite Editor"
       },
       {
         "command": "sqliteTableViewer.supportDeveloper",
         "title": "Support the developer",
-        "category": "SQLite Table Viewer"
+        "category": "SQLite Editor"
       },
       {
         "command": "sqliteTableViewer.moreViewers",
         "title": "More free viewers",
-        "category": "SQLite Table Viewer"
+        "category": "SQLite Editor"
+      },
+      {
+        "command": "sqliteTableViewer.enterLicenseKey",
+        "title": "Zovo: Enter license key",
+        "category": "SQLite Editor"
+      },
+      {
+        "command": "sqliteTableViewer.getPro",
+        "title": "Zovo: Get Pro",
+        "category": "SQLite Editor"
+      },
+      {
+        "command": "sqliteTableViewer.unlockWithSponsors",
+        "title": "Zovo: Unlock Pro with GitHub Sponsors",
+        "category": "SQLite Editor"
+      },
+      {
+        "command": "sqliteTableViewer.removeLicense",
+        "title": "Zovo: Remove license from this editor",
+        "category": "SQLite Editor"
       }
     ],
     "menus": {
@@ -124,17 +149,40 @@
           "command": "sqliteTableViewer.open",
           "when": "!explorerResourceIsFolder",
           "group": "navigation@21"
+        },
+        {
+          "command": "sqliteTableViewer.csvToNewDatabase",
+          "when": "resourceExtname =~ /^\\.(csv|tsv|tab|psv)$/i",
+          "group": "navigation@22"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "sqliteTableViewer.enterLicenseKey",
+          "when": "sqliteTableViewer.proEnabled"
+        },
+        {
+          "command": "sqliteTableViewer.getPro",
+          "when": "sqliteTableViewer.proEnabled"
+        },
+        {
+          "command": "sqliteTableViewer.unlockWithSponsors",
+          "when": "sqliteTableViewer.proEnabled"
+        },
+        {
+          "command": "sqliteTableViewer.removeLicense",
+          "when": "sqliteTableViewer.proEnabled"
         }
       ]
     },
     "configuration": {
-      "title": "SQLite Table Viewer",
+      "title": "SQLite Editor",
       "properties": {
         "sqliteTableViewer.maxFileSizeMB": {
           "type": "number",
           "default": 512,
           "minimum": 1,
-          "description": "The whole database is loaded into memory. Larger files show a message instead of loading."
+          "description": "The whole database is loaded into memory. Larger files show a message instead of loading. Editing has its own, lower limit (editMaxFileSizeMB)."
         },
         "sqliteTableViewer.copyMaxRows": {
           "type": "number",
@@ -162,19 +210,43 @@
           "type": "boolean",
           "default": true,
           "description": "Show the small Sponsor and More free viewers links at the right end of the viewer's status line. The change shows in files you open next. Nothing is sent anywhere."
+        },
+        "sqliteTableViewer.editMaxFileSizeMB": {
+          "type": "number",
+          "default": 256,
+          "minimum": 1,
+          "description": "Editing is refused for larger files, because the whole database and a second copy for the save must fit in memory. Larger files still open read-only."
+        },
+        "sqliteTableViewer.backupLocation": {
+          "type": "string",
+          "enum": [
+            "nextToFile",
+            "homeFolder"
+          ],
+          "enumDescriptions": [
+            "name.db.YYYYMMDD-HHMMSS.bak in the same folder as the database",
+            "~/.zovo-sqlite-backups/"
+          ],
+          "default": "nextToFile",
+          "description": "Where Save puts the backup copy of the database before it writes."
+        },
+        "sqliteTableViewer.enforceForeignKeys": {
+          "type": "boolean",
+          "default": true,
+          "description": "While editing, check foreign keys (PRAGMA foreign_keys = ON): a change that breaks one is refused, and Save checks the whole file."
         }
       }
     },
     "walkthroughs": [
       {
         "id": "sqliteTableViewer.start",
-        "title": "Get started with SQLite Table Viewer",
-        "description": "Open SQLite files read-only, browse tables, run SELECT queries and look inside JSON and BLOB cells.",
+        "title": "Get started with SQLite Editor",
+        "description": "Open SQLite files read-only, browse tables, then edit cells and rows, import CSV and save safely.",
         "steps": [
           {
             "id": "open",
             "title": "Open a database",
-            "description": "Click any .db, .sqlite, .sqlite3, .db3, .s3db, .sl3, .vscdb or .gpkg file. For other names, right-click the file and pick \"Open in SQLite Table Viewer\".\n[Find a database](command:workbench.action.quickOpen?%5B%22.db%22%5D)",
+            "description": "Click any .db, .sqlite, .sqlite3, .db3, .s3db, .sl3, .vscdb or .gpkg file. For other names, right-click the file and pick \"Open in SQLite Editor\".\n[Find a database](command:workbench.action.quickOpen?%5B%22.db%22%5D)",
             "media": {
               "markdown": "walkthrough/open.md"
             },
@@ -191,6 +263,28 @@
               "image": "images/orders-dark.png",
               "altText": "The orders table filtered to paid orders over 1,000 dollars and sorted by total, next to the list of tables, views, indexes and triggers."
             }
+          },
+          {
+            "id": "edit",
+            "title": "Edit cells and rows, then Save",
+            "description": "Click Enable editing. Double-click a cell or press Enter to change it, use + Row, Duplicate and Delete rows, or run INSERT and UPDATE in the SQL box. Every change waits in the pending list with Undo. Save checks constraints, makes a backup copy and replaces the file in one step.\n[Open settings](command:workbench.action.openSettings?%5B%22sqliteTableViewer%22%5D)",
+            "media": {
+              "markdown": "walkthrough/edit.md"
+            },
+            "completionEvents": [
+              "onCommand:workbench.action.openSettings"
+            ]
+          },
+          {
+            "id": "csv",
+            "title": "Import a CSV or TSV file",
+            "description": "Use Import CSV in the toolbar, or right-click a .csv file and pick Import CSV into a new SQLite database. Pick the delimiter and encoding, map the columns, and watch the progress bar. A 1M-row file takes seconds and can be cancelled.\n[Import CSV into a new database](command:sqliteTableViewer.csvToNewDatabase)",
+            "media": {
+              "markdown": "walkthrough/csv.md"
+            },
+            "completionEvents": [
+              "onCommand:sqliteTableViewer.csvToNewDatabase"
+            ]
           },
           {
             "id": "cells",

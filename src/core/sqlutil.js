@@ -23,7 +23,7 @@ function notSqliteMessage(bytes, size) {
   }
   if (n > 0 && printable / n > 0.95) return 'This is not a SQLite database. The file starts with plain text, not with the "SQLite format 3" header.';
   if (size >= 1024 && size % 512 === 0) {
-    return 'This file cannot be read. It does not start with the "SQLite format 3" header. It is probably an encrypted database (SQLCipher or SEE) or another binary format. SQLite Table Viewer does not open encrypted databases.';
+    return 'This file cannot be read. It does not start with the "SQLite format 3" header. It is probably an encrypted database (SQLCipher or SEE) or another binary format. SQLite Editor does not open encrypted databases.';
   }
   return 'This is not a SQLite database. The file does not start with the "SQLite format 3" header.';
 }

@@ -1,113 +1,142 @@
-# SQLite Viewer & SQLite3 DB File Browser, Database Explorer
+# SQLite Editor & Viewer, SQLite3 Database Browser (Edit Cells, CSV Import)
 
 <a href="https://marketplace.visualstudio.com/items?itemName=zovo.sqlite-table-viewer"><img src="https://img.shields.io/visual-studio-marketplace/i/zovo.sqlite-table-viewer?label=VS%20Code%20installs" alt="VS Code installs"></a>
 <a href="https://marketplace.visualstudio.com/items?itemName=zovo.sqlite-table-viewer"><img src="https://img.shields.io/visual-studio-marketplace/v/zovo.sqlite-table-viewer?label=version" alt="Version"></a>
 <a href="https://github.com/theluckystrike/sqlite-table-viewer/blob/HEAD/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license"></a>
 
-Free, with no paywall, no ads, no license banner and no sign-in. There is nothing to buy. Databases up to 512 MB open by default (a setting raises the limit).
+Free, no paywall, no sign-in, works offline. Opening, viewing, editing, Save and CSV import cost nothing, and there is no license banner.
 
-Click a `.db` or `.sqlite` file and this SQLite DB viewer shows its tables, schema, JSON columns and BLOBs in a fast read-only grid. It also shows the rows your app has not checkpointed yet, and it updates while the app writes.
+Click a `.db` or `.sqlite` file and it opens read-only. Click Enable editing to change cells and rows, run INSERT or UPDATE, or import a CSV file. Every change waits in a pending list with its SQL and Undo. Save checks the constraints, makes a backup copy and replaces the file in one step.
 
-<a href="https://raw.githubusercontent.com/theluckystrike/sqlite-table-viewer/main/images/vscode-live-wal.png"><img src="https://raw.githubusercontent.com/theluckystrike/sqlite-table-viewer/main/images/vscode-live-wal.png" alt="VS Code with app.db open on the events table. A blue line says it includes 6 committed transactions from app.db-wal, and the Live button is on in the toolbar" width="100%"></a>
+<a href="https://raw.githubusercontent.com/theluckystrike/sqlite-table-viewer/main/images/edit-dark.png"><img src="https://raw.githubusercontent.com/theluckystrike/sqlite-table-viewer/main/images/edit-dark.png" alt="VS Code with chinook.db open on the Track table in editing mode. Three staged changes are listed as UPDATE statements above the grid, with Undo, Show SQL and Save buttons in the edit bar." width="100%"></a>
 
-*A real VS Code 1.142 window. A Python script holds `app.db` open in WAL mode and keeps inserting rows, and the grid follows it.*
+*A real VS Code window with the Chinook sample database. Three cells were changed; nothing is on disk until Save.*
 
-- Sees the rows still in the `-wal` file. Many apps (Django, Rails, Prisma, Electron apps, browsers) keep new rows in `name.db-wal` until a checkpoint, so other viewers show old data or no tables at all. This one reads the committed transactions from the `-wal` file, the way SQLite does.
-- Live. When the app writes, the view reloads by itself and keeps your table, sort, filters and scroll position.
-- Safe for production files. The database loads into memory read-only. Writes are refused by SQLite itself (`PRAGMA query_only`), and nothing is ever saved back, to the database or to the `-wal` file.
-- Sees inside cells. JSON text opens as a tree. PNG, JPEG, GIF and WebP BLOBs show as pictures. A float32 embedding shows its dimension, min, max and norm, which helps with sqlite-vec and RAG tables.
-- No setup, no network. Plain JavaScript and SQLite compiled to WebAssembly, running offline in VS Code. No telemetry.
+- Read-only until you say so. Nothing is written before you click Enable editing and then Save. Before editing starts it tells you when another program has the file open, when the `-wal` file holds transactions that are not in the main file yet, or when a `-journal` shows a write in progress.
+- Safe Save. A backup copy first (`name.db.20261109-143000.bak`), then the new file goes to a temp file, is flushed to disk and replaces the old one with a rename. If the file changed on disk since you opened it, Save refuses and keeps your changes.
+- CSV and TSV import. 1,000,000 rows import in about 2 seconds with a progress bar and Cancel. Pick the delimiter, encoding and header row, map the columns, then Save.
+- Sees the `-wal` file and reloads live while your app writes, as before.
+- No network. Plain JavaScript and SQLite compiled to WebAssembly, running in VS Code. No telemetry.
 
 ## Quick start
 
-1. Install SQLite DB Viewer.
-2. Click any `.db`, `.sqlite`, `.sqlite3`, `.db3`, `.s3db`, `.sl3`, `.vscdb` or `.gpkg` file. It opens as a table.
+1. Install SQLite Editor & Viewer.
+2. Click any `.db`, `.sqlite`, `.sqlite3`, `.db3`, `.s3db`, `.sl3`, `.vscdb` or `.gpkg` file. It opens as a table, read-only.
+3. To change it, click Enable editing. Double-click a cell (or press Enter, F2, or just type), change it, press Enter. Press Save (Ctrl+S or Cmd+S) when you are done.
 
-A SQLite file with another name (`.data`, `.store`, no extension) is detected by its "SQLite format 3" header, and VS Code offers to open it here. You can also right-click any file and pick "Open in SQLite Table Viewer".
+To make a new database from a CSV file, right-click the `.csv` file in the Explorer and pick Import CSV into a new SQLite database.
 
-## More screenshots
+## Editing
 
-<a href="https://raw.githubusercontent.com/theluckystrike/sqlite-table-viewer/main/images/orders-dark.png"><img src="https://raw.githubusercontent.com/theluckystrike/sqlite-table-viewer/main/images/orders-dark.png" alt="store.db open on the orders table, filtered to paid orders over 100000 cents and sorted by total, next to the list of 4 tables, 2 views, 3 indexes and 1 trigger with row counts" width="100%"></a>
-
-*store.db, a generated shop database with 50,000 rows (scripts/make-samples.py), filtered and sorted. It opened in 57 ms.*
-
-| JSON column as a tree, light theme | Schema tab, dark theme |
+| Action | How |
 |---|---|
-| <a href="https://raw.githubusercontent.com/theluckystrike/sqlite-table-viewer/main/images/json-tree-light.png"><img src="https://raw.githubusercontent.com/theluckystrike/sqlite-table-viewer/main/images/json-tree-light.png" alt="types.sqlite with a JSON cell open in the cell viewer as a collapsible tree, next to PNG and float32 BLOB cells" width="100%"></a> | <a href="https://raw.githubusercontent.com/theluckystrike/sqlite-table-viewer/main/images/schema-dark.png"><img src="https://raw.githubusercontent.com/theluckystrike/sqlite-table-viewer/main/images/schema-dark.png" alt="The Schema tab for the orders table with column types, primary key, NOT NULL, defaults, the foreign key to customers and the CREATE statements" width="100%"></a> |
+| Change a cell | Double-click, Enter, F2 or type. Enter saves the cell and moves down, Tab moves right, Esc cancels. |
+| Set NULL | Select one cell and press Delete. |
+| Long text, JSON, BLOB | Space opens the cell panel. Pick TEXT, INTEGER, REAL, NULL or BLOB (hex), or Load file into cell. Save BLOB to file writes a BLOB out. |
+| Add, copy, remove rows | + Row, Duplicate, Delete rows (or click row numbers and press Delete). A new row fills NOT NULL columns, and a NOT NULL foreign key gets an existing parent key. |
+| SQL | INSERT, UPDATE, DELETE, REPLACE, CREATE, DROP and ALTER run in the SQL tab as staged changes. BEGIN, COMMIT, ATTACH and VACUUM do not: the editor owns the transaction. |
+| Table tools | Add, rename and drop columns, rename a table, find and replace in a column. |
+| Undo | Undo (Ctrl+Z or Cmd+Z in the grid) takes back the last change. Show SQL lists every staged statement, Discard all drops them. |
 
-| SQL box with history, dark theme | Float32 embedding, light theme |
-|---|---|
-| <a href="https://raw.githubusercontent.com/theluckystrike/sqlite-table-viewer/main/images/sql-dark.png"><img src="https://raw.githubusercontent.com/theluckystrike/sqlite-table-viewer/main/images/sql-dark.png" alt="A SELECT with a join, GROUP BY and json_extract run in 18 ms, with 30 result rows in the grid" width="100%"></a> | <a href="https://raw.githubusercontent.com/theluckystrike/sqlite-table-viewer/main/images/vector-light.png"><img src="https://raw.githubusercontent.com/theluckystrike/sqlite-table-viewer/main/images/vector-light.png" alt="A 384-dimension float32 BLOB decoded as a vector with min, max, mean, L2 norm and the first 64 values, above its hex dump" width="100%"></a> |
+Values are stored the way the column asks: typing `42` into an INTEGER column stores the number 42, `007` stays text, and a 64-bit integer keeps every digit. A CHECK, NOT NULL, UNIQUE or foreign key error refuses only that one change and says which constraint it was. Your other pending changes stay.
 
-## What you can do
+### What Save does
 
-Pick a table or view on the left. Each one shows its row count. Indexes and triggers are listed too, and a click shows their SQL.
+1. Looks at the file again. If its size, modified time or header changed since it was loaded, Save stops: another program wrote to it.
+2. Stops when the `-wal` file holds committed frames or a hot `-journal` exists. "Checkpoint and reload" runs `PRAGMA wal_checkpoint(TRUNCATE)` with the sqlite3 tool when it is installed.
+3. Checks foreign keys (`PRAGMA foreign_key_check`) and runs `PRAGMA quick_check`. A deferred foreign key that breaks is named with its table and row.
+4. Copies the file to `name.db.YYYYMMDD-HHMMSS.bak` next to it, or to `~/.zovo-sqlite-backups` (setting `sqliteTableViewer.backupLocation`).
+5. Writes the new database to a temp file in the same folder, flushes it to disk, and renames it over the original. A WAL-mode database stays in WAL mode.
 
-Click a column header to sort. Clicks cycle through ascending, descending and the table's own order, and NULLs go last. Type in the box under a header to filter that column. Number columns take `>10`, `>=10`, `<5`, `!=3` and ranges like `5..9`. Text matches any part of the value, `=word` matches exactly and `!word` drops rows that contain it. `empty` and `!empty` work everywhere. The search box looks in every column. Every filter value is sent to SQLite as a bound parameter, never pasted into the SQL text.
+A crash at any point leaves the old file or the new one, never half of each. The tests open every saved file in the sqlite3 tool and run `PRAGMA integrity_check`.
 
-## WAL files and live reload
+## Import CSV and TSV
 
-When a database is in WAL mode, SQLite writes new transactions to `name.db-wal` first and copies them into `name.db` later, at a checkpoint. A viewer that reads only `name.db` misses those rows, and a table made since the last checkpoint is not there at all. This viewer reads both files. Only complete, committed transactions are used: frames are checked with the WAL salts and checksums, and a half-written transaction at the end is skipped. A blue line above the grid says how many transactions came from the `-wal` file. If the `-wal` file can't be used, a yellow line says so and the main file is shown.
+<a href="https://raw.githubusercontent.com/theluckystrike/sqlite-table-viewer/main/images/import-preview-dark.png"><img src="https://raw.githubusercontent.com/theluckystrike/sqlite-table-viewer/main/images/import-preview-dark.png" alt="The import panel for million.csv: comma delimiter, UTF-8, header row, a new table named orders, five columns with guessed types INTEGER, TEXT, REAL, TEXT, TEXT, and a preview of the first rows." width="100%"></a>
 
-The viewer checks the database and its `-wal` file once a second. When either changes, it reads them again and shows the same table with the same sort, filters, scroll position and open cell. The "Live" button in the toolbar turns this off (setting `sqliteTableViewer.autoReload`). Then a line says "The file changed on disk" with a Reload button. "Reload" in the toolbar reads the files again at any time. If a reload happens in the middle of a write and fails, the old view stays and the viewer tries once more.
+- Import CSV in the toolbar adds a table to the open database, or adds rows to an existing table (CSV columns map to table columns by name).
+- The preview shows the first 200 rows. The delimiter (comma, semicolon, tab, pipe), the encoding (UTF-8, Windows-1252, UTF-16) and the header row are guessed and can be changed. Column types are guessed as INTEGER, REAL or TEXT, and values with leading zeros (ZIP codes, IDs) stay TEXT.
+- Quoted fields with commas, doubled quotes and line breaks inside quotes are read correctly.
+- The file is read in 1 MB pieces, so a large file never sits in memory as text. The progress bar shows rows and bytes, and Cancel rolls everything back.
+- A row that breaks a constraint stops the import at its line number and adds nothing.
+- The whole import is one staged change: Undo removes it, Save writes it.
 
-Rows are fetched one page at a time, so a table with millions of rows scrolls as fast as a small one.
+<a href="https://raw.githubusercontent.com/theluckystrike/sqlite-table-viewer/main/images/import-done-dark.png"><img src="https://raw.githubusercontent.com/theluckystrike/sqlite-table-viewer/main/images/import-done-dark.png" alt="orders.db after the import: the orders table with 1,000,000 rows in the grid and one staged change, CREATE TABLE orders and INSERT INTO orders repeated 1,000,000 times." width="100%"></a>
 
-The Schema tab shows each column's declared type, primary key, NOT NULL, default and foreign key, plus the CREATE statements for the table, its indexes and its triggers.
+*1,000,000 rows (46 MB of CSV) imported in a real VS Code window in about 2 seconds, then saved. The grid stayed responsive the whole time.*
 
-The SQL tab runs one statement at a time. SELECT, WITH, VALUES, EXPLAIN and reading PRAGMAs (`table_info`, `index_list`, `integrity_check` and so on) are allowed. The result fills the same grid, so you can sort, filter and copy it. You see the row count and the time, and the last 20 queries stay in the history list.
+## Why this one
 
-Double-click a cell, or press Enter, to open the cell viewer. Text and JSON show in full. A BLOB shows its size and a hex dump, plus the picture for image data and vector stats when the bytes decode as float32 or float64.
+People who use SQLite tools in VS Code have reported these problems. The right column says how this extension behaves, and which test checks it.
 
-Select cells by dragging or with Shift+click, or click row numbers for whole rows. Copy CSV, Copy JSON and Copy INSERT put the selection on the clipboard, and Ctrl+C (Cmd+C on macOS) copies tab-separated values. Export saves every row in view, filtered and sorted, as CSV or JSON.
+| Reported problem | Link | Here |
+|---|---|---|
+| A paid tier blocks basic use: "paywall makes it really bad, can't even open the db" (September 2026), "Says it's free but it's not free" (September 2026). | [Marketplace reviews of a popular SQLite viewer](https://marketplace.visualstudio.com/items?itemName=qwtel.sqlite-viewer&ssr=false#review-details) | Opening, viewing, editing, Save and CSV import are free, with no account and no license banner. |
+| Changes reached the disk only after the editor tab was closed. | [sqlite3-editor issue #87](https://github.com/yy0931/sqlite3-editor/issues/87) | Save writes the file at once. The real VS Code test opens the file in the sqlite3 tool right after Save and finds the new values and `integrity_check` ok. |
+| Opening a database locked it, so the app that owns it got "attempt to write a readonly database". | [sqlite3-editor issue #60](https://github.com/yy0931/sqlite3-editor/issues/60) | The file is read into memory and closed. Another program can keep writing while it is open, and the view reloads. The test writes to the file from the sqlite3 tool during an edit. |
+| A database was reported damaged after it was opened in an editor while it was in use. | [sqlite3-editor issue #49](https://github.com/yy0931/sqlite3-editor/issues/49) | Read-only until Enable editing. Save refuses a file that changed, a `-wal` with pending transactions and a hot journal, makes a backup, and replaces the file atomically. |
+
+## Large files
+
+The whole database is loaded into memory. Files up to 512 MB open (setting `sqliteTableViewer.maxFileSizeMB`), and rows are fetched one page at a time, so a table with millions of rows scrolls as fast as a small one. Editing is limited to 256 MB (setting `sqliteTableViewer.editMaxFileSizeMB`), because Save needs a second copy in memory. A larger file stays open read-only and says so. In the real VS Code test a 301 MB database with 1,000,000 rows opened in under 2 seconds and scrolled to its last row.
+
+## Reading
+
+Pick a table or view on the left. Click a column header to sort, type under a header to filter (`>10`, `5..9`, `=word`, `!word`, `empty`), or search every column at once. Filter values are bound parameters, never pasted into the SQL text.
+
+When a database is in WAL mode, new transactions sit in `name.db-wal` until a checkpoint. This viewer reads the committed transactions from the `-wal` file, the way SQLite does, and a blue line says how many came from it. It checks the database and its `-wal` once a second and reloads with the same table, sort, filters and scroll position (the Live button turns this off). While editing is on, it does not reload. It shows a notice instead.
+
+The Schema tab shows columns, keys, foreign keys and the CREATE statements. The SQL tab runs one statement at a time with a history of the last 20. The cell panel shows JSON as a tree, images as pictures and float32 BLOBs as vectors. Copy as puts the selection on the clipboard as CSV, TSV, JSON or INSERT statements. Export saves every row in view as CSV, JSON or SQL INSERT statements.
+
+<a href="https://raw.githubusercontent.com/theluckystrike/sqlite-table-viewer/main/images/edit-light.png"><img src="https://raw.githubusercontent.com/theluckystrike/sqlite-table-viewer/main/images/edit-light.png" alt="The same editing view in the Light Modern theme, with the staged UPDATE statements above the Track table." width="100%"></a>
 
 ## Settings
 
 | Setting | Default | What it does |
 |---|---|---|
 | `sqliteTableViewer.maxFileSizeMB` | `512` | Larger files show a message instead of loading |
+| `sqliteTableViewer.editMaxFileSizeMB` | `256` | Larger files open read-only; Enable editing says why |
+| `sqliteTableViewer.backupLocation` | `nextToFile` | `nextToFile` or `homeFolder` (`~/.zovo-sqlite-backups`) |
+| `sqliteTableViewer.enforceForeignKeys` | `true` | While editing, `PRAGMA foreign_keys = ON`, and Save checks every foreign key |
 | `sqliteTableViewer.copyMaxRows` | `100000` | Most rows copied to the clipboard at once |
-| `sqliteTableViewer.exportMaxRows` | `1000000` | Most rows written to one CSV or JSON export |
-| `sqliteTableViewer.autoReload` | `true` | Reload the view when the database or its `-wal` file changes. Turn it off with `false` to get a Reload notice instead |
-| `sqliteTableViewer.askForRating` | `true` | Ask for a Marketplace rating after 3 databases opened without an error on 2 different days. "Later" asks one more time after 7 days, "No thanks" never again. It never asks after an error. Turn it off with `false`. |
+| `sqliteTableViewer.exportMaxRows` | `1000000` | Most rows written to one export |
+| `sqliteTableViewer.autoReload` | `true` | Reload when the database or its `-wal` file changes (not while editing) |
+| `sqliteTableViewer.askForRating` | `true` | Ask for a Marketplace rating at most twice, never after an error |
 
 ## Limits
 
-- The whole file is loaded into memory, so files over 512 MB show a message instead (setting `sqliteTableViewer.maxFileSizeMB`).
-- Read-only by design. Editing rows is not supported.
-- The `-shm` file is not read. It only speeds up the app that owns the database; the `-wal` file holds the data.
-- Encrypted databases (SQLCipher, SEE) cannot be opened. They get a clear message, and so do damaged files and files that are not SQLite at all.
-- Row counts for files over 100 MB come from `sqlite_stat1` when it exists. Otherwise a "count" button counts on demand.
+- Editing works for files on this computer. Files on remote or virtual file systems open read-only.
+- If you close the tab with unsaved changes, they are dropped and the file stays as it was. A notice says so.
+- Encrypted databases (SQLCipher, SEE) cannot be opened. They get a clear message, and so do damaged files and files that are not SQLite.
+- The `-shm` file is not read. It only speeds up the app that owns the database.
 
 ## Privacy
 
-SQLite Table Viewer makes no network requests and collects no telemetry. The database is read in a worker thread on your machine. The webview runs under a strict Content Security Policy with no remote scripts, and every value from the file is written as plain text, never as HTML.
+No network requests and no telemetry. The database is read and edited in a worker thread on your computer. Two local tools may run: `lsof` (macOS and Linux) to see whether another program has the file open before editing and saving, and `sqlite3` only when you click "Checkpoint and reload". The webview runs under a strict Content Security Policy with no remote scripts, and every value from the file is written as plain text, never as HTML.
 
 ## Development
 
 ```sh
 npm install
-npm test          # builds with esbuild, makes sample databases in a temp folder, runs node --test
-npm run samples   # writes the sample databases to samples/ (Python standard library only)
+npm test          # builds with esbuild, then node --test: 115 tests, incl. a 1,000,000-row CSV import and save
 npm run package   # writes dist/sqlite-table-viewer-<version>.vsix
 ```
-
-The screenshots come from `scripts/screenshot/live.js`, which serves the real webview page and drives it over the Chrome DevTools Protocol.
 
 ## Support Zovo
 
 Zovo extensions are free, with no ads and no tracking. They are made by [theluckystrike](https://github.com/theluckystrike) on GitHub. If this one saves you time, you can support the work:
 
 - [Sponsor on GitHub](https://github.com/sponsors/theluckystrike)
+- [PayPal](https://www.paypal.com/paypalme/najzzz)
 - [Follow theluckystrike on GitHub](https://github.com/theluckystrike)
 
 ## More tools by Zovo
 
-- [XLSX Viewer, Excel Viewer, CSV Viewer & Parquet Viewer](https://marketplace.visualstudio.com/items?itemName=zovo.table-viewer-vscode) opens CSV, TSV, Excel and Parquet files as a sortable, filterable table.
+- [XLSX Viewer & CSV Preview for Excel, XLS & Parquet](https://marketplace.visualstudio.com/items?itemName=zovo.table-viewer-vscode) opens CSV, TSV, Excel and Parquet files as a sortable, filterable table.
+- [Spreadsheet Editor for CSV, Excel & XLSX](https://github.com/theluckystrike/spreadsheet-editor-vscode) edits CSV, TSV and Excel files as a spreadsheet, with undo and save.
 - [Large JSON Viewer, JSON Browser & JSON Tree](https://marketplace.visualstudio.com/items?itemName=zovo.zovo-json-tree-viewer) shows large JSON files as a searchable tree, copies JSONPath and turns arrays of objects into a table.
 - [Avro Viewer, Apache Arrow Viewer & Feather Viewer](https://marketplace.visualstudio.com/items?itemName=zovo.arrow-avro-viewer) opens Avro, Arrow and Feather files as a paged table.
 - [JSONL Viewer, Large JSONL Table & NDJSON Viewer](https://marketplace.visualstudio.com/items?itemName=zovo.zovo-jsonl-viewer) opens JSONL and NDJSON files as a table, as records or as a chat view.
-- [NetCDF Viewer & HDF5 Viewer (NC, H5)](https://marketplace.visualstudio.com/items?itemName=zovo.hdf5-netcdf-explorer) browses groups, attributes and values in HDF5 and NetCDF files and plots slices.
 
 See [all Zovo extensions on the Marketplace](https://marketplace.visualstudio.com/publishers/zovo).
 

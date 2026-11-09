@@ -1,9 +1,11 @@
 'use strict';
 /* global acquireVsCodeApi */
-// SQLite Table Viewer webview. All database content goes into the DOM through textContent only
+// SQLite Editor webview. All database content goes into the DOM through textContent only
 // (images use a data: URL built on the host from bytes it checked). The grid comes from Table Viewer.
 const M = require('./math');
 const C = require('./cells');
+const { installEdit } = require('./edit');
+let edit = null;
 
 const vscode = acquireVsCodeApi();
 const ROW_H = 24;
@@ -34,7 +36,7 @@ const app = document.getElementById('app');
 const toolbar = el('div', 'toolbar');
 const title = el('span', 'title', S.fileName);
 const roBadge = el('span', 'fmt', 'READ-ONLY');
-roBadge.title = 'The database is loaded into memory and never written back. Writes are refused.';
+roBadge.title = 'Opened read-only. Nothing is written until you click Enable editing and then Save.';
 const stats = el('span', 'stats');
 const spacer = el('span', 'spacer');
 const tabs = el('div', 'tabs');
@@ -49,19 +51,21 @@ const search = el('input', 'search');
 search.type = 'search';
 search.placeholder = 'Search all columns';
 search.setAttribute('aria-label', 'Search all columns');
-const btnCsv = el('button', 'btn', 'Copy CSV');
-btnCsv.title = 'Copy the selection as CSV with a header row (no selection: the whole view)';
-const btnJson = el('button', 'btn', 'Copy JSON');
-btnJson.title = 'Copy the selection as a JSON array of objects';
-const btnInsert = el('button', 'btn', 'Copy INSERT');
-btnInsert.title = 'Copy the selected rows (all columns) as INSERT statements';
+const copyAs = el('select', 'sheet copyas');
+copyAs.title = 'Copy the selection (no selection: the whole view). Ctrl+C or Cmd+C copies it as tab-separated text.';
+copyAs.setAttribute('aria-label', 'Copy as');
+for (const [v, label] of [['', 'Copy as…'], ['csv', 'CSV with header'], ['tsv', 'TSV (for Excel)'], ['json', 'JSON'], ['insert', 'SQL INSERT (whole rows)']]) {
+  const o = el('option', null, label);
+  o.value = v;
+  copyAs.append(o);
+}
 const btnExport = el('button', 'btn', 'Export');
-btnExport.title = 'Save every row in view (filtered and sorted) as CSV or JSON';
+btnExport.title = 'Save every row in view (filtered and sorted) as CSV, JSON or SQL INSERT statements';
 const btnReload = el('button', 'btn', '↻ Reload');
 btnReload.title = 'Read the file and its -wal again. The table, sort, filters and scroll position stay.';
 const btnLive = el('button', 'btn', 'Live');
 btnLive.title = 'Live: reload by itself when the file or its -wal changes (setting sqliteTableViewer.autoReload)';
-toolbar.append(title, roBadge, stats, spacer, tabs, search, btnReload, btnLive, btnCsv, btnJson, btnInsert, btnExport);
+toolbar.append(title, roBadge, stats, spacer, tabs, search, btnReload, btnLive, copyAs, btnExport);
 btnReload.addEventListener('click', () => { flash('Reloading…', true); vscode.postMessage({ type: 'reload' }); });
 btnLive.addEventListener('click', () => vscode.postMessage({ type: 'setAutoReload', on: !S.autoReload }));
 function renderLive() {
@@ -83,7 +87,7 @@ sqlBar.hidden = true;
 const sqlInput = el('textarea', 'sqlinput');
 sqlInput.spellcheck = false;
 sqlInput.rows = 4;
-sqlInput.placeholder = 'SELECT * FROM table WHERE ...   (Ctrl+Enter or Cmd+Enter runs it. Read-only: SELECT, WITH, VALUES, EXPLAIN and reading PRAGMAs.)';
+sqlInput.placeholder = 'SELECT * FROM table WHERE ...   (Ctrl+Enter or Cmd+Enter runs it. INSERT, UPDATE, DELETE, CREATE and ALTER run after Enable editing, as staged changes.)';
 sqlInput.setAttribute('aria-label', 'SQL statement');
 const sqlRow = el('div', 'sqlrow');
 const sqlRun = el('button', 'btn primary', 'Run');
@@ -436,6 +440,7 @@ body.addEventListener('dblclick', e => {
   const hit = cellAt(e.clientX, e.clientY);
   if (!hit || hit.gutter) return;
   S.focus = S.anchor = { r: hit.r, c: hit.c };
+  if (edit && edit.onDblClick(hit)) return;
   openCell();
 });
 
@@ -461,6 +466,7 @@ function ensureColVisible(c) {
 }
 
 grid.addEventListener('keydown', e => {
+  if (edit && edit.onKeydown(e)) return;
   const mod = e.metaKey || e.ctrlKey;
   if (mod && e.key.toLowerCase() === 'a') { e.preventDefault(); selectAll(); return; }
   if (mod && e.key.toLowerCase() === 'c') { e.preventDefault(); copy('tsv', false); return; }
@@ -489,9 +495,7 @@ function copy(format, header = true) {
   flash('Copying…', true);
   vscode.postMessage({ type: 'copy', format, sel: { ...sel, header } });
 }
-btnCsv.addEventListener('click', () => copy('csv'));
-btnJson.addEventListener('click', () => copy('json'));
-btnInsert.addEventListener('click', () => copy('insert'));
+copyAs.addEventListener('change', () => { const f = copyAs.value; copyAs.value = ''; if (f) copy(f); });
 btnExport.addEventListener('click', () => { if (S.columns.length) vscode.postMessage({ type: 'export' }); });
 
 // ---------- cell viewer ----------
@@ -505,6 +509,11 @@ function requestCell() {
 
 function renderCell(msg) {
   if (!S.cellOpen || !S.focus || msg.row !== S.focus.r || msg.col !== S.focus.c) return;
+  renderCellView(msg);
+  if (edit) edit.decorateCell(msg);
+}
+
+function renderCellView(msg) {
   cellPanel.textContent = '';
   const v = msg.value;
   const top = el('div', 'cellhead');
@@ -610,11 +619,11 @@ function updateStatus() {
   stats.textContent = !src ? '' : `${what} · ${fmtN(S.rowCount)} rows` + (total && total.rows !== null && total.rows !== S.rowCount && !total.estimate ? ` of ${fmtN(total.rows)}` : '') + ` · ${fmtN(S.columns.length)} columns`;
   const sel = currentSel();
   statusLeft.textContent = sel
-    ? `Selected ${fmtN(sel.r1 - sel.r0 + 1)} × ${fmtN(sel.c1 - sel.c0 + 1)}` + (sel.r0 === sel.r1 && sel.c0 === sel.c1 ? ' · Enter or double-click opens the cell' : '')
-    : S.columns.length ? 'Click a cell. Double-click or Enter shows JSON, images, vectors and hex.' : '';
+    ? `Selected ${fmtN(sel.r1 - sel.r0 + 1)} × ${fmtN(sel.c1 - sel.c0 + 1)}` + (sel.r0 === sel.r1 && sel.c0 === sel.c1 ? (S.edit && S.edit.editing ? ' · Type, Enter or double-click edits it; Space opens the cell' : ' · Enter or double-click opens the cell') : '')
+    : S.columns.length ? (S.edit && S.edit.editing ? 'Click a cell and type to change it. Delete sets NULL. Row numbers select rows.' : 'Click a cell. Double-click or Enter shows JSON, images, vectors and hex.') : '';
   statusRight.textContent = S.timing;
   const has = S.columns.length > 0;
-  btnCsv.disabled = btnJson.disabled = btnInsert.disabled = btnExport.disabled = !has;
+  copyAs.disabled = btnExport.disabled = !has;
   search.disabled = !S.canFilter || !has;
 }
 
@@ -654,6 +663,7 @@ function showEmpty() {
 window.addEventListener('message', ev => {
   const msg = ev.data;
   if (!msg || typeof msg !== 'object') return;
+  if (edit && edit.onMessage(msg)) return;
   switch (msg.type) {
     case 'init':
       S.fileName = msg.fileName;
@@ -768,12 +778,14 @@ window.addEventListener('message', ev => {
       S.sort = msg.sort;
       S.cache.clear();
       S.pending.clear();
-      S.anchor = S.focus = null;
+      if (!msg.keepSel) S.anchor = S.focus = null;
+      else if (S.focus && S.focus.r >= S.rowCount) S.anchor = S.focus = S.rowCount ? { r: S.rowCount - 1, c: S.focus.c } : null;
       head.querySelectorAll('.hcell').forEach(h => {
         const c = Number(h.dataset.col);
         h.querySelector('.sort').textContent = S.sort && S.sort.col === c ? (S.sort.dir === 'asc' ? '▲' : '▼') : '';
       });
-      flash(`${fmtN(msg.viewCount)} rows · ${fmtN(msg.ms)} ms`);
+      if (!msg.keepSel) flash(`${fmtN(msg.viewCount)} rows · ${fmtN(msg.ms)} ms`);
+      if (msg.keepSel && S.cellOpen) requestCell();
       updateStatus();
       layout();
       break;
@@ -790,7 +802,9 @@ window.addEventListener('message', ev => {
       break;
     case 'sqlDone':
       sqlMsg.className = 'sqlmsg ok';
-      sqlMsg.textContent = `${fmtN(msg.rows)} rows in ${fmtN(msg.ms)} ms` + (msg.more ? ' (first 100,000 shown)' : '');
+      sqlMsg.textContent = msg.write
+        ? (msg.ddl ? `Done in ${fmtN(msg.ms)} ms. Staged: Save writes it.` : `${fmtN(msg.rows)} rows changed in ${fmtN(msg.ms)} ms. Staged: Save writes it.`)
+        : `${fmtN(msg.rows)} rows in ${fmtN(msg.ms)} ms` + (msg.more ? ' (first 100,000 shown)' : '');
       break;
     case 'sqlError':
       sqlMsg.className = 'sqlmsg err';
@@ -813,6 +827,34 @@ window.addEventListener('message', ev => {
     default:
       break;
   }
+});
+
+// ---------- editing ----------
+function cellValue(r, c) {
+  const page = S.cache.get(Math.floor(r / PAGE));
+  const row = page ? page[r % PAGE] : null;
+  return row ? row.cells[c] : undefined;
+}
+function cellElement(r, c) {
+  for (const rowEl of rowPool) {
+    if (rowEl.hidden || rowEl._vr !== r) continue;
+    return rowEl._cells.find(d => d._c === c) || null;
+  }
+  return null;
+}
+function move(dr, dc) {
+  if (!S.focus) return;
+  const f = { r: Math.max(0, Math.min(S.rowCount - 1, S.focus.r + dr)), c: Math.max(0, Math.min(S.columns.length - 1, S.focus.c + dc)) };
+  S.focus = f;
+  S.anchor = { ...f };
+  ensureVisible(f.r);
+  ensureColVisible(f.c);
+  render();
+  updateStatus();
+}
+edit = installEdit({
+  S, el, vscode, fmtN, app, toolbar, banners, roBadge, grid, gridWrap, cellPanel, content,
+  flash, currentSel, openCell, ensureVisible, schedule, updateStatus, cellValue, cellElement, move,
 });
 
 setTab('data');
