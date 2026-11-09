@@ -111,7 +111,7 @@ function createProTools({ vscode, pro, extensionPath }) {
     if (!r.ok) { failed('erd', r); return false; }
     await pro.spend('erd');
     await openSide([md]);
-    const pick = await vscode.window.showInformationMessage(`Wrote the schema document and the ER diagram: ${r.result.tables} tables, ${r.result.fks} foreign keys.`, 'Open SVG', 'Show in folder');
+    const pick = await vscode.window.showInformationMessage(`Wrote the schema document and the ER diagram: ${r.result.tables} table${r.result.tables === 1 ? '' : 's'}, ${r.result.fks} foreign key${r.result.fks === 1 ? '' : 's'}.`, 'Open SVG', 'Show in folder');
     if (pick === 'Open SVG') await vscode.commands.executeCommand('vscode.open', vscode.Uri.file(svg));
     if (pick === 'Show in folder') await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(svg));
     return true;
@@ -144,7 +144,7 @@ function createProTools({ vscode, pro, extensionPath }) {
     const rows = r.result.tables.reduce((n, t) => n + t.rows, 0);
     const cut = r.result.tables.filter(t => t.truncated).map(t => t.table);
     const pick = await vscode.window.showInformationMessage(
-      `Exported ${r.result.tables.length} tables (${rows.toLocaleString('en-US')} rows) to ${path.basename(out)}.` + (cut.length ? ` Stopped at the row limit in: ${cut.join(', ')}.` : ''),
+      `Exported ${r.result.tables.length} table${r.result.tables.length === 1 ? '' : 's'} (${rows.toLocaleString('en-US')} row${rows === 1 ? '' : 's'}) to ${path.basename(out)}.` + (cut.length ? ` Stopped at the row limit in: ${cut.join(', ')}.` : ''),
       'Show in folder');
     if (pick === 'Show in folder') await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(fmt.id === 'xlsx' ? out : r.result.files[0] || out));
     return true;

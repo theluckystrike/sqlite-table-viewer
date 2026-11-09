@@ -148,7 +148,7 @@ test('ER: the SVG has a box per table, a path per foreign key, and escapes names
 test('ER: the Markdown document lists every table, column, foreign key, index, view and trigger', () => {
   const doc = P.schemaMarkdown(P.schemaModel(makeDb(SCHEMA_A)), { title: 'shop.db', svgName: 'shop-er.svg', mmdName: 'shop-er.mmd', now: 'T' });
   assert.match(doc, /^# shop\.db: database schema/);
-  assert.match(doc, /6 tables, 1 views, 1 indexes, 1 triggers, 2 foreign keys\./);
+  assert.match(doc, /6 tables, 1 view, 1 index, 1 trigger, 2 foreign keys\./);
   assert.match(doc, /\[shop-er\.svg\]\(shop-er\.svg\)/);
   assert.match(doc, /```mermaid\nerDiagram/);
   assert.match(doc, /\| customer_id \| INTEGER \| FK \| yes \|  \| customers\(id\) on delete cascade \|/);

@@ -127,6 +127,7 @@ const cellText = (v, max = 60) => {
 };
 const md = s => String(s).replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/</g, '&lt;').replace(/`/g, "'");
 const fmt = n => Number(n).toLocaleString('en-US');
+const plural = (n, one, many) => `${fmt(n)} ${n === 1 ? one : many || one + 's'}`;
 
 /**
  * Compare database A (main) with database B (attached here as zovo_b, file name nameB in the sql.js file system).
@@ -300,8 +301,8 @@ function compareReport({ sa, sb, sum, data, labelA, labelB, statements, capped, 
   const L = [];
   const userTables = s => [...s.tables.values()].filter(t => t.kind !== 'shadow').length;
   L.push(`# Database compare: ${md(labelA)} and ${md(labelB)}`, '');
-  L.push(`- **A**: ${md(opts.pathA || labelA)} (${userTables(sa)} tables)`);
-  L.push(`- **B**: ${md(opts.pathB || labelB)} (${userTables(sb)} tables)`);
+  L.push(`- **A**: ${md(opts.pathA || labelA)} (${plural(userTables(sa), 'table')})`);
+  L.push(`- **B**: ${md(opts.pathB || labelB)} (${plural(userTables(sb), 'table')})`);
   L.push(`- Written ${opts.now || new Date().toISOString()} by SQLite Editor (Zovo Pro). Both files were only read.`, '');
   L.push('## Summary', '');
   L.push('| | Count |', '| --- | ---: |');
@@ -479,7 +480,7 @@ function erSvg(model, opts = {}) {
     + '<marker id="many" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M11 1 L1 6 L11 11 M1 6 H11" stroke="#475569" stroke-width="1.4" fill="none"/></marker></defs>');
   S.push(`<rect width="${W}" height="${H}" fill="#ffffff"/>`);
   S.push(`<text x="30" y="36" font-size="18" font-weight="600" fill="#0f172a">${xml(title)}</text>`);
-  S.push(`<text x="30" y="54" fill="#64748b">${model.tables.length} tables, ${model.tables.reduce((n, t) => n + t.fks.length, 0)} foreign keys. Written by SQLite Editor (Zovo Pro).</text>`);
+  S.push(`<text x="30" y="54" fill="#64748b">${plural(model.tables.length, 'table')}, ${plural(model.tables.reduce((n, t) => n + t.fks.length, 0), 'foreign key')}. Written by SQLite Editor (Zovo Pro).</text>`);
   // Lines first, boxes on top.
   for (const t of model.tables) {
     const child = boxes.get(t.name);
@@ -528,7 +529,7 @@ function schemaMarkdown(model, opts = {}) {
   const title = opts.title || 'Database';
   const L = [`# ${md(title)}: database schema`, ''];
   const fkCount = model.tables.reduce((n, t) => n + t.fks.length, 0);
-  L.push(`${model.tables.length} tables, ${model.views.length} views, ${model.indexes.filter(i => i.sql).length} indexes, ${model.triggers.length} triggers, ${fkCount} foreign keys.`);
+  L.push(`${plural(model.tables.length, 'table')}, ${plural(model.views.length, 'view')}, ${plural(model.indexes.filter(i => i.sql).length, 'index', 'indexes')}, ${plural(model.triggers.length, 'trigger')}, ${plural(fkCount, 'foreign key')}.`);
   L.push(`Written ${opts.now || new Date().toISOString()} by SQLite Editor (Zovo Pro) from ${md(opts.path || title)}.`, '');
   if (opts.svgName) L.push(`Diagram: [${md(opts.svgName)}](${encodeURI(opts.svgName)})${opts.mmdName ? `, Mermaid source: [${md(opts.mmdName)}](${encodeURI(opts.mmdName)})` : ''}.`, '');
   L.push('## Tables', '', '| Table | Rows | Columns | Primary key | References |', '| --- | ---: | ---: | --- | --- |');
