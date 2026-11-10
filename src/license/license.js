@@ -179,7 +179,12 @@ function createKeyRail(o) {
     return result(true, 'ok', `${label} is on${until}. Thank you for supporting Zovo.`, r.license);
   }
 
+  // EXEC14 (XSELL2 move 1): a prefill that passes the offline check for this sku is stored without an input box
+  // (the carry-over from another Zovo tool). Any other prefill opens the input box with it, as before.
   async function unlock(prefill) {
+    if (typeof prefill === 'string' && cleanKey(prefill) && (sku ? checkKey(prefill, sku, vopts()) : verifyKey(prefill, vopts())).ok) {
+      return saveKey(prefill);
+    }
     const text = await vscode.window.showInputBox({
       title: `${label}: enter license key`,
       prompt: 'Paste the key from the license page or your receipt. It starts with ZOVO1. Checked offline.',
@@ -202,6 +207,7 @@ function createKeyRail(o) {
     async remove() { await context.secrets.delete(SECRET_KEY); setFrom({ ok: false, reason: 'empty' }); },
     state() { return current ? { sku: current.sku, issued: current.issued, expires: current.expires, seats: current.seats, live: current.live } : null; },
     lastResult: () => lastResult,
+    currentKey: () => (alive(current) ? current.key : null), // EXEC14: for ~/.zovo/pro.json only, never returned to a caller
     renewUrl: () => (lastResult.reason === 'expired' ? renewUrl(lastResult.license) : current && current.expires ? renewUrl(current) : null),
     onDidChange(fn) { listeners.add(fn); return { dispose: () => listeners.delete(fn) }; },
   };

@@ -82,8 +82,14 @@ test('4th use: one dialog that names USD 19; Escape (false) costs nothing and ru
   assert.equal(await pro.allow('erd'), false);
   assert.equal(lic.asked.length, 1);
   assert.equal(lic.asked[0][0], 'ER diagram and schema document');
-  assert.match(lic.asked[0][1], /3 free tries/);
-  assert.match(lic.asked[0][1], /USD 19 once/);
+  // EXEC14: structured panel text; the shared module writes "You used the 3 free tries" and the USD 19 paragraph.
+  assert.equal(lic.asked[0][1].triesUsed, 3);
+  assert.match(lic.asked[0][1].detail, /^Writes an ER diagram/);
+  const { createLicense } = require('../src/license');
+  const real = createLicense({ vscode: { window: {}, commands: { registerCommand: () => ({ dispose() {} }) } }, context: { subscriptions: [], secrets: { get: async () => undefined, onDidChange: () => ({ dispose() {} }) }, globalState: { get: () => undefined, update: async () => {} } }, sku: 'sqlite-pro', name: 'Zovo', product: 'SQLite Editor', proTools: ['Compare databases', 'ER diagram and schema document', 'Export all tables'] });
+  const text = real.panelDetail('ER diagram and schema document', lic.asked[0][1]);
+  assert.match(text, /^You used the 3 free tries on this computer\./);
+  assert.match(text, /USD 19 once, for life\. It turns on Compare databases and Export all tables here/);
   assert.deepEqual(ctx.store.get(TRIES_KEY), { erd: 3 }, 'Escape did not change the count');
   lic.setAnswer(true); // unlocked in the dialog
   lic.pro = true;
@@ -119,7 +125,7 @@ test('showProFeatures=false hides the Pro UI unless licensed; the change applies
 });
 
 test('package.json: Pro commands and license commands follow proVisible; settings; name, id and engine kept', () => {
-  assert.equal(pkg.version, '0.4.0');
+  assert.equal(pkg.version, '0.4.1');
   assert.equal(pkg.name, 'sqlite-table-viewer');
   assert.equal(pkg.publisher, 'zovo');
   assert.equal(pkg.displayName, 'SQLite Editor & Viewer, SQLite3 Database Browser (Edit Cells, CSV Import)');

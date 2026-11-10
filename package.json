@@ -2,7 +2,7 @@
   "name": "sqlite-table-viewer",
   "displayName": "SQLite Editor & Viewer, SQLite3 Database Browser (Edit Cells, CSV Import)",
   "description": "Free, no paywall, no sign-in, works offline. Opens .db and .sqlite files read-only; click Enable editing to change cells and rows, run INSERT or UPDATE, and import a 1M-row CSV. Every change is staged with Undo, and Save makes a backup and writes atomically. Reads the -wal file, live reload, JSON and BLOB cells, export to CSV, JSON or SQL.",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "publisher": "zovo",
   "license": "MIT",
   "icon": "icon.png",
@@ -124,48 +124,48 @@
       },
       {
         "command": "sqliteTableViewer.proTools",
-        "title": "Pro tools: compare, ER diagram, export all tables…",
+        "title": "Pro Tools: Compare Databases, ER Diagram, Export All Tables…",
         "category": "SQLite Editor"
       },
       {
         "command": "sqliteTableViewer.compareDatabases",
-        "title": "Compare with another database (Zovo Pro)…",
+        "title": "Compare Databases (Pro)…",
         "category": "SQLite Editor"
       },
       {
         "command": "sqliteTableViewer.erDiagram",
-        "title": "ER diagram and schema document (Zovo Pro)…",
+        "title": "ER Diagram and Schema Document (Pro)…",
         "category": "SQLite Editor"
       },
       {
         "command": "sqliteTableViewer.exportAllTables",
-        "title": "Export all tables to Excel or CSV (Zovo Pro)…",
+        "title": "Export All Tables to Excel or CSV (Pro)…",
         "category": "SQLite Editor"
       },
       {
         "command": "sqliteTableViewer.enterLicenseKey",
-        "title": "Zovo: Enter license key",
-        "category": "SQLite Editor"
+        "title": "Enter Zovo Pro license key",
+        "category": "Zovo Pro"
       },
       {
         "command": "sqliteTableViewer.getPro",
-        "title": "Zovo: Get Pro",
-        "category": "SQLite Editor"
+        "title": "Get Zovo Pro (USD 19 once, all 22 Zovo extensions)",
+        "category": "Zovo Pro"
       },
       {
         "command": "sqliteTableViewer.unlockWithSponsors",
-        "title": "Zovo: Unlock Pro with GitHub Sponsors",
-        "category": "SQLite Editor"
+        "title": "I already paid: unlock with GitHub Sponsors",
+        "category": "Zovo Pro"
       },
       {
         "command": "sqliteTableViewer.payWithPayPal",
-        "title": "Zovo: Pay for Pro with PayPal",
-        "category": "SQLite Editor"
+        "title": "Pay for Zovo Pro with PayPal (USD 19, team of 5 USD 59)",
+        "category": "Zovo Pro"
       },
       {
         "command": "sqliteTableViewer.removeLicense",
-        "title": "Zovo: Remove license from this editor",
-        "category": "SQLite Editor"
+        "title": "Remove Zovo Pro from this editor",
+        "category": "Zovo Pro"
       }
     ],
     "menus": {
@@ -357,6 +357,14 @@
             "completionEvents": [
               "onCommand:workbench.action.openSettings"
             ]
+          },
+          {
+            "id": "zovo-related",
+            "title": "Files that often come with SQLite databases",
+            "description": "If your project also has spreadsheets and CSV files or JSON files, these free Zovo extensions open them. A link opens the extension page, and you choose there whether to install it.\n[XLSX and CSV Viewer](command:extension.open?%5B%22zovo.table-viewer-vscode%22%5D)\n[JSON Tree Viewer](command:extension.open?%5B%22zovo.zovo-json-tree-viewer%22%5D)",
+            "media": {
+              "markdown": "walkthrough/related.md"
+            }
           }
         ]
       }
@@ -381,6 +389,6 @@
     "url": "https://github.com/theluckystrike/sqlite-table-viewer"
   },
   "sponsor": {
-    "url": "https://github.com/sponsors/theluckystrike"
+    "url": "https://github.com/sponsors/theluckystrike/sponsorships?tier_id=679878"
   }
 }

@@ -80,15 +80,15 @@ People who use SQLite tools in VS Code have reported these problems. The right c
 
 Everything in the sections above is free and stays free: opening, reading, the SQL tab, editing cells and rows, Save with a backup, CSV and TSV import with column transforms, the table tools, and export of the rows in view. There is no trial timer and no license banner, and nothing about Pro shows when a database opens.
 
-Zovo Pro is USD 19 once and unlocks the Pro tools in every Zovo extension. It adds three tools for work across a whole database. Each one can be used 3 times for free on each computer. A try counts only when the tool wrote its files; Escape or an error costs nothing. After that, starting the tool shows one dialog with the ways to unlock: the "$19 one time" tier on GitHub Sponsors, PayPal (you get a license key), or a key you already have.
+Zovo Pro is USD 19 once and unlocks the Pro tools in every Zovo extension. It adds three tools for work across a whole database. Each one can be used 3 times for free on each computer. A try counts only when the tool wrote its files; Escape or an error costs nothing. After that, starting the tool shows one dialog with Get Zovo Pro (the "$19 one time" tier on GitHub Sponsors), Pay with PayPal (you get a license key) and I already paid. Turn Pro on once: the other Zovo extensions on the same computer read it from `~/.zovo/pro.json` (readable only by you; the key, or your GitHub login and tier, never a token) and are Pro too, with no second sign-in or paste.
 
 Start them from the DB tools button (with a small PRO badge) in the editor, the Command Palette, or a right-click on a database file in the Explorer.
 
 | Pro tool | What you get |
 |---|---|
-| Compare with another database | Tables, columns, indexes, views, triggers and rows of two SQLite files, with rows matched by primary key (or rowid). A Markdown report with counts and the first differences of each table, and `a-vs-b-sync.sql`, a script that makes the second database match the first. The script is opened in an editor and never run for you. |
-| ER diagram and schema document | `name-er.svg` (tables, columns, keys and a line for each foreign key), `name-er.mmd` (Mermaid `erDiagram`, renders on GitHub) and `name-schema.md` with every table, column, key, index, trigger and view. |
-| Export all tables | One Excel workbook with a sheet per table (bold, frozen header row), or a folder with one CSV file per table. |
+| Compare Databases (Pro) | Tables, columns, indexes, views, triggers and rows of two SQLite files, with rows matched by primary key (or rowid). A Markdown report with counts and the first differences of each table, and `a-vs-b-sync.sql`, a script that makes the second database match the first. The script is opened in an editor and never run for you. |
+| ER Diagram and Schema Document (Pro) | `name-er.svg` (tables, columns, keys and a line for each foreign key), `name-er.mmd` (Mermaid `erDiagram`, renders on GitHub) and `name-schema.md` with every table, column, key, index, trigger and view. |
+| Export All Tables to Excel or CSV (Pro) | One Excel workbook with a sheet per table (bold, frozen header row), or a folder with one CSV file per table. |
 
 The setting `sqliteTableViewer.showProFeatures` set to `false` hides the button and the Pro commands. Both databases are only read; the tools never write to a database file.
 
@@ -142,7 +142,9 @@ npm run package   # writes dist/sqlite-table-viewer-<version>.vsix
 
 ## Support Zovo
 
-Zovo extensions are free, with no ads and no tracking. They are made by [theluckystrike](https://github.com/theluckystrike) on GitHub. If this one saves you time, you can support the work:
+Zovo Pro: USD 19 once, every Zovo viewer. [Get Zovo Pro on GitHub Sponsors](https://github.com/sponsors/theluckystrike/sponsorships?tier_id=679878) to turn on the Pro tools in this extension and in the other Zovo extensions you use. The free features stay free.
+
+Zovo extensions have no ads and no tracking. They are made by [theluckystrike](https://github.com/theluckystrike) on GitHub. You can also support the work with no Pro:
 
 - [Sponsor on GitHub](https://github.com/sponsors/theluckystrike)
 - [PayPal](https://www.paypal.com/paypalme/najzzz)
@@ -154,11 +156,11 @@ Open a [format request](https://github.com/theluckystrike/sqlite-table-viewer/is
 
 ## More tools by Zovo
 
-- [XLSX Viewer & CSV Preview for Excel, XLS & Parquet](https://marketplace.visualstudio.com/items?itemName=zovo.table-viewer-vscode) opens CSV, TSV, Excel and Parquet files as a sortable, filterable table.
+- [XLSX Viewer, Excel Viewer, CSV Viewer & Parquet Viewer (XLS, CSV Preview)](https://marketplace.visualstudio.com/items?itemName=zovo.table-viewer-vscode) opens CSV, TSV, Excel and Parquet files as a sortable, filterable table.
+- [Postgres & MySQL Query Client - SQL Database Tool (SQLite, CSV Export)](https://marketplace.visualstudio.com/items?itemName=zovo.zovo-sql-client) runs Postgres and MySQL queries, edits rows and exports CSV.
+- [MongoDB Client & MongoDB GUI: Query, Edit Documents, Aggregation & Indexes](https://marketplace.visualstudio.com/items?itemName=zovo.zovo-mongodb-client) queries and edits MongoDB documents in a grid or as JSON.
+- [Oracle SQL & SQL Server Query Client (MSSQL, T-SQL, PLSQL, Oracle Database Tool)](https://marketplace.visualstudio.com/items?itemName=zovo.zovo-oracle-sqlserver-client) runs Oracle SQL and T-SQL and browses tables.
 - [Large JSON Viewer, JSON Browser & JSON Tree](https://marketplace.visualstudio.com/items?itemName=zovo.zovo-json-tree-viewer) shows large JSON files as a searchable tree, copies JSONPath and turns arrays of objects into a table.
-- [Avro Viewer, Apache Arrow Viewer & Feather Viewer](https://marketplace.visualstudio.com/items?itemName=zovo.arrow-avro-viewer) opens Avro, Arrow and Feather files as a paged table.
-- [JSONL Viewer, Large JSONL Table & NDJSON Viewer](https://marketplace.visualstudio.com/items?itemName=zovo.zovo-jsonl-viewer) opens JSONL and NDJSON files as a table, as records or as a chat view.
-- [GeoJSON Viewer, KML Viewer & GPX Viewer (Map Preview, Shapefile)](https://marketplace.visualstudio.com/items?itemName=zovo.zovo-geo-map-viewer) GeoJSON viewer, KML viewer and GPX viewer with a map preview in VS Code. Also opens shapefiles (SHP, zipped), KMZ, TopoJSON, WKT and CSV with lat/lon: feature table, properties, GPX distance and elevation profile, reprojection from .prj, PNG export. Free, no sign-in, works offline.
 
 See [all Zovo extensions on the Marketplace](https://marketplace.visualstudio.com/publishers/zovo).
 

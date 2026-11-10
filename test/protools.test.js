@@ -255,7 +255,7 @@ function harness() {
     commands: { executeCommand: async () => {}, registerCommand: () => ({ dispose() {} }) },
   };
   const context = { subscriptions: [], globalState: { get: (k, d) => (store.has(k) ? store.get(k) : d), update: async (k, v) => { store.set(k, v); } } };
-  const lic = { ready: Promise.resolve(), isPro: () => false, requirePro: async (n, d) => { calls.modal.push(n + ': ' + d); return false; }, onDidChange: () => ({ dispose() {} }) };
+  const lic = { ready: Promise.resolve(), isPro: () => false, requirePro: async (n, d) => { calls.modal.push(n + ': ' + (typeof d === 'string' ? d : JSON.stringify(d))); return false; }, onDidChange: () => ({ dispose() {} }) };
   const pro = createPro({ vscode, context, license: lic });
   const tools = createProTools({ vscode, pro, extensionPath: root });
   return { vscode, calls, queue, uri, pro, tools, store };
@@ -339,6 +339,6 @@ test('VS Code flow: export all to xlsx and CSV; after 3 tries the 4th start show
   const before = h.calls.pick.length;
   assert.equal(await h.tools.exportAll(h.uri(db)), false);
   assert.equal(h.calls.modal.length, 1);
-  assert.match(h.calls.modal[0], /^Export all tables: .*You used the 3 free tries.*USD 19 once/);
+  assert.match(h.calls.modal[0], /^Export all tables: \{"detail":"Writes every table to one Excel workbook.*"triesUsed":3\}$/); // EXEC14 structured panel text
   assert.equal(h.calls.pick.length, before, 'no format list after Escape in the dialog');
 });

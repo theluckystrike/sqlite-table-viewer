@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.4.1 (2026-11-10)
+
+- "More free viewers" now starts with the Zovo extensions most related to this one. Picking one opens its Marketplace page, where you choose to install it.
+- The README has a "Support Zovo" section with GitHub Sponsors and the developer's GitHub profile, and "More tools by Zovo" lists related extensions.
+- The walkthrough ends with a step that links free Zovo extensions for the files that often come with this one. A link opens the extension page; nothing installs on its own.
+- The footer reads "Rate · More free viewers · Zovo Pro, USD 19 · PayPal · Hide". "Zovo Pro, USD 19" and the Marketplace Sponsor button open the Zovo Pro tier; "PayPal" opens the PayPal steps with the amount.
+- Zovo Pro buy path: the Pro message names the other Pro tools in SQLite Editor and the number of Zovo extensions Pro covers, with 4 buttons: Get Zovo Pro (USD 19), Pay with PayPal, I already paid, Cancel. "I already paid" turns Pro on with GitHub Sponsors or a license key.
+- Turn Zovo Pro on once per computer: the other Zovo extensions you have pick it up from `~/.zovo/pro.json`, with no second sign-in or paste. After an unlock you get one offer to turn it on in your other Zovo tools; "Not now" is final.
+- "Support the developer" lists Zovo Pro first. Every Pro link opens the USD 19 Zovo Pro tier on GitHub Sponsors, not the general Sponsors page.
+- The 5 Zovo Pro commands share one "Zovo Pro" group in the Command Palette, with the same names in every Zovo extension.
+- The Pro tools have names that start with the tool and end in "(Pro)" (for example "Compare Databases (Pro)"), so typing "Pro" in the Command Palette finds them.
+- Nothing that was free changed. No popup on open.
+
 ## 0.4.0 (2026-11-10)
 
 - 0.3.0 was never published on its own. 0.4.0 has everything listed under 0.3.0 below: editing, safe Save, CSV import and SQL export.

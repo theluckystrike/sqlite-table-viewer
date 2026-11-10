@@ -12,8 +12,8 @@ const P = 'sqliteTableViewer';
 test('support: package.json has the sponsor field, the two commands and the setting', () => {
   const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
   const support = require('../src/support');
-  assert.strictEqual(pkg.sponsor.url, 'https://github.com/sponsors/theluckystrike');
-  assert.strictEqual(pkg.sponsor.url, support.sponsorUrl());
+  assert.strictEqual(pkg.sponsor.url, 'https://github.com/sponsors/theluckystrike/sponsorships?tier_id=679878');
+  assert.strictEqual(pkg.sponsor.url, 'https://github.com/sponsors/theluckystrike/sponsorships?tier_id=679878');
   const ids = pkg.contributes.commands.map(c => c.command);
   assert.ok(ids.includes(P + '.supportDeveloper') && ids.includes(P + '.moreViewers'));
   const cfg = Array.isArray(pkg.contributes.configuration) ? pkg.contributes.configuration : [pkg.contributes.configuration];
@@ -48,7 +48,7 @@ test('support: the footer shows by default and sqliteTableViewer.showSupportLink
       await provider.resolveCustomEditor({ uri: { scheme: 'file', path: '/x/big.db', fsPath: '/x/big.db' } }, panel);
       assert.strictEqual(/id="zovo-support"/.test(webview.html), shown, JSON.stringify(settings));
       assert.strictEqual(webview.html.includes('command:sqliteTableViewer.moreViewers'), shown);
-      assert.deepStrictEqual(webview.options.enableCommandUris, [P + '.supportDeveloper', P + '.moreViewers', 'workbench.action.openSettings']);
+      assert.deepStrictEqual(webview.options.enableCommandUris, [P + '.supportDeveloper', P + '.moreViewers', 'sqliteTableViewer.getPro', 'sqliteTableViewer.payWithPayPal', 'workbench.action.openSettings']);
     } finally { try { dispose(); } catch { /* not opened */ } Module._load = orig; }
   }
 });

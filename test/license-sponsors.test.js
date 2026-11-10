@@ -7,7 +7,7 @@ const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
 
-const MOD = process.env.ZOVO_SPONSORS_MODULE || path.join(__dirname, '..', 'src', 'license', 'sponsors.js');
+const MOD = process.env.ZOVO_SPONSORS_MODULE || (fs.existsSync(path.join(__dirname, '..', 'sponsors.js')) ? path.join(__dirname, '..', 'sponsors.js') : path.join(__dirname, '..', 'src', 'license', 'sponsors.js'));
 const S = require(MOD);
 
 const DAY = 24 * 60 * 60 * 1000;

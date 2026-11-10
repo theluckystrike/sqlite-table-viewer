@@ -39,7 +39,7 @@ const PRICE_LINE = 'Zovo Pro is USD 19 once and unlocks the Pro tools in every Z
 
 function createPro({ vscode, context, enabled = PRO_ENABLED, license, tries = FREE_TRIES }) {
   let lic = license || null;
-  if (enabled && !lic) lic = createLicense({ vscode, context, sku: SKU, name: 'Zovo', product: 'SQLite Editor', commandPrefix: SECTION });
+  if (enabled && !lic) lic = createLicense({ vscode, context, sku: SKU, name: 'Zovo', product: 'SQLite Editor', proTools: Object.values(TOOLS).map(x => x.name), commandPrefix: SECTION });
   const showSetting = () => {
     try { return vscode.workspace.getConfiguration(SECTION).get('showProFeatures', true) !== false; } catch { return true; }
   };
@@ -90,9 +90,10 @@ function createPro({ vscode, context, enabled = PRO_ENABLED, license, tries = FR
       if (!enabled) return true;
       try { await lic.ready; } catch { /* cache unreadable: treated as not Pro */ }
       const t = TOOLS[tool] || { name: tool, detail: '' };
-      if (licensed()) return lic.requirePro(t.name, t.detail); // refreshes a monthly sponsorship when it is due; no dialog
+      if (licensed()) return lic.requirePro(t.name, { detail: t.detail }); // refreshes a monthly sponsorship when it is due; no dialog
       if (used(tool) < tries) return true;
-      return lic.requirePro(t.name, `${t.detail} You used the ${tries} free tries of this tool on this computer. ${PRICE_LINE}`);
+      // EXEC14: the shared module (buy path v2) adds the price, the other Pro tools, the count and "stays free".
+      return lic.requirePro(t.name, { detail: t.detail, triesUsed: tries });
     },
     /** The tool wrote its files: use one free try (nothing when Pro is unlocked). Returns the tries left. */
     async spend(tool) {

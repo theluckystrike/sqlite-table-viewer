@@ -20,7 +20,8 @@ test('rate link: footer order is Rate, More free viewers, Sponsor, PayPal (when 
   const html = S.footerHtml('x', true, '');
   assert.ok(html.includes(`<a href="${review}"`), html);
   const labels = [...html.matchAll(/<a [^>]*>([^<]+)<\/a>/g)].map((m) => m[1]);
-  const want = ['Rate', 'More free viewers', 'Sponsor'].concat(S.paypalUrl() ? ['PayPal'] : [], ['Hide']);
+  const money = S.moneyLinks ? S.moneyLinks('x').map((l) => l.label) : ['Sponsor'].concat(S.paypalUrl() ? ['PayPal'] : []);  // EXEC16: Zovo Pro listings show 'Zovo Pro, USD 19'
+  const want = ['Rate', 'More free viewers'].concat(money, ['Hide']);
   assert.deepEqual(labels, want, html);
   assert.equal((html.match(/zovo-sep/g) || []).length, want.length - 1, 'one separator between links');
   assert.equal(S.footerHtml('x', false, ''), '', 'Hide setting removes the whole line, Rate too');
@@ -28,7 +29,7 @@ test('rate link: footer order is Rate, More free viewers, Sponsor, PayPal (when 
 
 test('rate link: hover markdown starts with Rate', () => {
   const md = S.footerMarkdown('x');
-  assert.ok(md.startsWith(`[Rate](${review}) · [More free viewers](command:x.moreViewers) · [Sponsor](command:x.supportDeveloper)`), md);
+  assert.ok(md.startsWith(`[Rate](${review}) · [More free viewers](command:x.moreViewers) · ` + (S.PRO ? `[Zovo Pro, USD ${S.PRO.usd}](command:${S.PRO.getPro})` : '[Sponsor](command:x.supportDeveloper)')), md);  // EXEC16
   assert.equal(/\[PayPal\]/.test(md), S.paypalUrl() !== '');
 });
 
