@@ -129,18 +129,15 @@
       },
       {
         "command": "sqliteTableViewer.compareDatabases",
-        "title": "Compare Databases (Pro)…",
-        "category": "SQLite Editor"
+        "title": "Compare SQLite Databases (Pro)…"
       },
       {
         "command": "sqliteTableViewer.erDiagram",
-        "title": "ER Diagram and Schema Document (Pro)…",
-        "category": "SQLite Editor"
+        "title": "ER Diagram of a SQLite Database (Pro)…"
       },
       {
         "command": "sqliteTableViewer.exportAllTables",
-        "title": "Export All Tables to Excel or CSV (Pro)…",
-        "category": "SQLite Editor"
+        "title": "Export All SQLite Tables to Excel or CSV (Pro)…"
       },
       {
         "command": "sqliteTableViewer.enterLicenseKey",

@@ -86,9 +86,9 @@ Start them from the DB tools button (with a small PRO badge) in the editor, the 
 
 | Pro tool | What you get |
 |---|---|
-| Compare Databases (Pro) | Tables, columns, indexes, views, triggers and rows of two SQLite files, with rows matched by primary key (or rowid). A Markdown report with counts and the first differences of each table, and `a-vs-b-sync.sql`, a script that makes the second database match the first. The script is opened in an editor and never run for you. |
-| ER Diagram and Schema Document (Pro) | `name-er.svg` (tables, columns, keys and a line for each foreign key), `name-er.mmd` (Mermaid `erDiagram`, renders on GitHub) and `name-schema.md` with every table, column, key, index, trigger and view. |
-| Export All Tables to Excel or CSV (Pro) | One Excel workbook with a sheet per table (bold, frozen header row), or a folder with one CSV file per table. |
+| Compare SQLite Databases (Pro) | Tables, columns, indexes, views, triggers and rows of two SQLite files, with rows matched by primary key (or rowid). A Markdown report with counts and the first differences of each table, and `a-vs-b-sync.sql`, a script that makes the second database match the first. The script is opened in an editor and never run for you. |
+| ER Diagram of a SQLite Database (Pro) | `name-er.svg` (tables, columns, keys and a line for each foreign key), `name-er.mmd` (Mermaid `erDiagram`, renders on GitHub) and `name-schema.md` with every table, column, key, index, trigger and view. |
+| Export All SQLite Tables to Excel or CSV (Pro) | One Excel workbook with a sheet per table (bold, frozen header row), or a folder with one CSV file per table. |
 
 The setting `sqliteTableViewer.showProFeatures` set to `false` hides the button and the Pro commands. Both databases are only read; the tools never write to a database file.
 

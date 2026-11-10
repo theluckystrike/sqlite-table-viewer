@@ -10,7 +10,7 @@
 - Turn Zovo Pro on once per computer: the other Zovo extensions you have pick it up from `~/.zovo/pro.json`, with no second sign-in or paste. After an unlock you get one offer to turn it on in your other Zovo tools; "Not now" is final.
 - "Support the developer" lists Zovo Pro first. Every Pro link opens the USD 19 Zovo Pro tier on GitHub Sponsors, not the general Sponsors page.
 - The 5 Zovo Pro commands share one "Zovo Pro" group in the Command Palette, with the same names in every Zovo extension.
-- The Pro tools have names that start with the tool and end in "(Pro)" (for example "Compare Databases (Pro)"), so typing "Pro" in the Command Palette finds them.
+- The Pro tools have names that start with the tool and end in "(Pro)" (for example "Compare SQLite Databases (Pro)"), so typing "Pro" in the Command Palette finds them.
 - Nothing that was free changed. No popup on open.
 
 ## 0.4.0 (2026-11-10)
