@@ -18,6 +18,13 @@ Click a `.db` or `.sqlite` file and it opens read-only. Click Enable editing to 
 - Sees the `-wal` file and reloads live while your app writes, as before.
 - No network. Plain JavaScript and SQLite compiled to WebAssembly, running in VS Code. No telemetry.
 
+## Teams and companies
+
+- Zovo Pro Team is the company licence: USD 59 once for a team of 5, one key, the Pro tools in every Zovo extension that has them. [See Zovo Pro Team](https://license.zovo.one/buy/zovo-pro-team?client_reference_id=readme-sqlite)
+- Commercial use is allowed.
+- The key is checked on your computer, so it works offline. No account and no subscription.
+- Invoice with your company name and tax ID on request: support@zovo.one.
+
 ## Quick start
 
 1. Install SQLite Editor & Viewer.
